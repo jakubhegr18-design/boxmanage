@@ -1,6 +1,6 @@
 # 📦 BoxManage
 
-Inventura krabic s QR kódy pro domácnost/dílnu. Vytiskneš QR štítky, nalepíš na krabice a pak je skenuješ mobilem. Webová aplikace (React PWA) + Node.js backend s SQLite databází, funguje jako **Home Assistant add-on**.
+Inventura krabic s QR kódy pro domácnost/dílnu. Vytiskneš QR štítky, nalepíš na krabice a pak je skenuješ mobilem. Webová aplikace (React PWA) + Node.js backend s SQLite databází, funguje jako **Home Assistant app (add-on)**.
 
 ## Funkce
 
@@ -12,44 +12,55 @@ Inventura krabic s QR kódy pro domácnost/dílnu. Vytiskneš QR štítky, nalep
 - 📜 **Historie** — kdo a kdy co přidal/vydal/přesunul
 - 👥 **Uživatelé** — admin + běžní uživatelé, přihlašování
 - 📤 **Export** — CSV i XLSX (Excel)
-- 📱 **PWA** — aplikace se dá nainstalovat na telefon/pc
+- 📱 **PWA** — aplikace se dá nainstalovat na telefon/PC
 
 ## Struktura
 
 ```
-server/   Node.js + Express API + SQLite (node:sqlite)
-web/      React + Vite + PWA frontend
-addon/    Home Assistant add-on (Docker + Caddy self-signed HTTPS)
+repository.yaml          <- konfigurace HA repozitáře (povinné)
+boxmanage/               <- Home Assistant app (add-on)
+  config.yaml            <- konfigurace add-onu
+  Dockerfile             <- sestavení (Node + Caddy self-signed HTTPS)
+  server/                <- Node.js + Express API + SQLite (node:sqlite)
+  web/                   <- React + Vite + PWA frontend
+start.bat                <- lokální spuštění na Windows
 ```
 
 ## Lokální spuštění (vývoj)
 
 ```bash
 # backend
-cd server
+cd boxmanage/server
 npm install
 npm start            # http://localhost:8090
 
 # frontend (v jiném terminálu)
-cd web
+cd boxmanage/web
 npm install
 npm run dev          # http://localhost:5173  (proxy na /api -> :8090)
 
 # produkční build webu
-cd web && npm run build
+cd boxmanage/web && npm run build
 # pak stačí běžet jen server (servíruje i web)
 ```
+
+Na Windows stačí poklepat na **`start.bat`** (nainstaluje, sestaví a spustí na http://localhost:8090).
 
 Výchozí účet: **admin / admin** (změň ho v Nastavení).
 
 ## Instalace do Home Assistant OS
 
-1. Nastavení → **Doplňky (Add-ons)** → **Přidat doplněk** → **Repository**
-2. Přidej adresář: `https://github.com/petrh/boxmanage`
-3. Vyhledej **BoxManage** → **Instalovat** → **Spustit**
+1. Nastavení → **Doplňky (Add-ons)** → tři tečky → **Repozitáře**
+2. Přidej adresář: `https://github.com/jakubhegr18-design/boxmanage`
+3. Vyhledej **BoxManage** → **Instalovat** → **Spustit** (sestaví se na tvém HA)
 4. Otevři `https://<IP_HA>:8090` (mobil/PC ve stejné síti)
 
-> ⚠️ Web běží na **HTTPS se self-signed certifikátem**. Při prvním otevření na mobilu/PC odsouhlas certifikát („Pokračovat na stránku”). Bez toho prohlížeč nepovolí kameru pro skenování.
+> ⚠️ Web běží na **HTTPS se self-signed certifikátem** (generuje Caddy v add-onu). Při prvním
+> otevření na mobilu/PC odsouhlas certifikát („Pokračovat na stránku”). Bez toho prohlížeč
+> nepovolí kameru pro skenování QR.
+
+> ℹ️ Sestavení add-onu probíhá přímo na tvém HA (vyžaduje ~1 min a přístup na internet).
+> Data se ukládají do `/data` (SQLite) a přežijí restart i aktualizaci.
 
 ## API přehled
 

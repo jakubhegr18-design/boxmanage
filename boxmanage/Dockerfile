@@ -1,5 +1,4 @@
 # syntax=docker/dockerfile:1
-ARG BUILD_FROM
 
 # ---------- Stage 1: build web frontend ----------
 FROM node:24-alpine AS build-web
@@ -11,7 +10,7 @@ COPY web/ ./
 RUN npm run build
 
 # ---------- Stage 2: runtime ----------
-FROM $BUILD_FROM
+FROM node:24-alpine
 ARG TARGETARCH
 ARG CADDY_VERSION=2.9.1
 
@@ -26,8 +25,8 @@ RUN npm ci --omit=dev
 
 COPY server/src ./src
 COPY --from=build-web /app/dist ./web/dist
-COPY addon/Caddyfile ./Caddyfile
-COPY addon/run.sh ./run.sh
+COPY Caddyfile ./Caddyfile
+COPY run.sh ./run.sh
 RUN chmod +x /app/run.sh
 
 ENV NODE_ENV=production \

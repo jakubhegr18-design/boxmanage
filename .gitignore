@@ -5,7 +5,7 @@ dist/
 .DS_Store
 
 # data a databáze
-server/data/
+data/
 *.db
 *.db-journal
 *.db-wal
