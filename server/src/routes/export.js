@@ -1,0 +1,102 @@
+const express = require('express');
+const ExcelJS = require('exceljs');
+const { db } = require('../db');
+const { requireAuth } = require('../auth');
+
+const router = express.Router();
+
+function boxRows() {
+  return db.prepare(`
+    SELECT b.id, b.name, b.description, b.position,
+           COALESCE(l.name, '') AS location_name, b.created_at, b.updated_at
+    FROM boxes b
+    LEFT JOIN locations l ON l.id = b.location_id
+    ORDER BY b.name
+  `).all();
+}
+
+function itemRows() {
+  return db.prepare(`
+    SELECT b.id AS box_id, b.name AS box_name, b.position,
+           COALESCE(l.name, '') AS location_name,
+           i.name AS item_name, i.quantity, i.unit
+    FROM items i
+    JOIN boxes b ON b.id = i.box_id
+    LEFT JOIN locations l ON l.id = b.location_id
+    ORDER BY b.name, i.name
+  `).all();
+}
+
+router.get('/csv', requireAuth, (req, res) => {
+  const rows = itemRows();
+  const lines = [
+    ['krabice_id', 'krabice', 'pozice', 'lokace', 'položka', 'množství', 'jednotka'],
+    ...rows.map((r) => [r.box_id, r.box_name, r.position, r.location_name, r.item_name, r.quantity, r.unit]),
+  ];
+  const csv = '\uFEFF' + lines.map((l) => l.map(esc).join(';')).join('\r\n');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="boxmanage-export.csv"');
+  res.send(csv);
+});
+
+router.get('/xlsx', requireAuth, async (req, res) => {
+  const wb = new ExcelJS.Workbook();
+  wb.created = new Date();
+
+  const wsBoxes = wb.addWorksheet('Krabice');
+  wsBoxes.columns = [
+    { header: 'ID', key: 'id', width: 40 },
+    { header: 'Název', key: 'name', width: 30 },
+    { header: 'Popis', key: 'description', width: 40 },
+    { header: 'Pozice', key: 'position', width: 10 },
+    { header: 'Lokace', key: 'location_name', width: 20 },
+    { header: 'Vytvořeno', key: 'created_at', width: 20 },
+    { header: 'Upraveno', key: 'updated_at', width: 20 },
+  ];
+  wsBoxes.addRows(boxRows());
+
+  const wsItems = wb.addWorksheet('Položky');
+  wsItems.columns = [
+    { header: 'ID krabice', key: 'box_id', width: 40 },
+    { header: 'Krabice', key: 'box_name', width: 30 },
+    { header: 'Pozice', key: 'position', width: 10 },
+    { header: 'Lokace', key: 'location_name', width: 20 },
+    { header: 'Položka', key: 'item_name', width: 30 },
+    { header: 'Množství', key: 'quantity', width: 12 },
+    { header: 'Jednotka', key: 'unit', width: 10 },
+  ];
+  wsItems.addRows(itemRows());
+
+  const wsMov = wb.addWorksheet('Historie');
+  wsMov.columns = [
+    { header: 'Čas', key: 'created_at', width: 22 },
+    { header: 'Krabice', key: 'box_name', width: 30 },
+    { header: 'Akce', key: 'action', width: 24 },
+    { header: 'Uživatel', key: 'username', width: 16 },
+    { header: 'Detail', key: 'detail', width: 60 },
+  ];
+  wsMov.addRows(db.prepare(`
+    SELECT m.created_at, b.name AS box_name, m.action, u.username, m.detail
+    FROM movements m
+    LEFT JOIN boxes b ON b.id = m.box_id
+    LEFT JOIN users u ON u.id = m.user_id
+    ORDER BY m.created_at DESC
+  `).all().map((m) => ({ ...m, detail: (m.detail ? JSON.parse(m.detail) : {}) })));
+
+  for (const ws of [wsBoxes, wsItems, wsMov]) {
+    ws.getRow(1).font = { bold: true };
+  }
+
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', 'attachment; filename="boxmanage-export.xlsx"');
+  await wb.xlsx.write(res);
+  res.end();
+});
+
+function esc(v) {
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  return s.includes(';') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+module.exports = router;
