@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api, fmtDate } from '../api';
+import { Pin, Search } from '../components/Icons';
 
 export default function Boxes() {
   const [params, setParams] = useSearchParams();
@@ -43,12 +44,15 @@ export default function Boxes() {
     <div>
       <h2>Krabice <span className="muted">({data.total})</span></h2>
 
-      <input
-        className="input"
-        placeholder="Hledat podle názvu, pozice, ID…"
-        value={search}
-        onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-      />
+      <div className="search-wrap">
+        <span className="search-ico"><Search size={17} /></span>
+        <input
+          className="input"
+          placeholder="Hledat podle názvu, pozice, ID…"
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+        />
+      </div>
 
       <div className="filter-row">
         <select className="input" value={filterLoc} onChange={(e) => { setFilterLoc(e.target.value); setPage(1); }}>
@@ -72,7 +76,7 @@ export default function Boxes() {
                 {b.description && <div className="muted small truncate">{b.description}</div>}
                 <div className="box-meta">
                   {b.position && <span className="chip">{b.position}</span>}
-                  {b.location_name && <span className="muted small">📍 {b.location_name}</span>}
+                  {b.location_name && <span className="muted small loc-tag"><Pin size={12} /> {b.location_name}</span>}
                 </div>
               </div>
               <div className="box-side">

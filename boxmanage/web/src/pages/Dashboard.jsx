@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, fmtDate, fmtQty } from '../api';
+import { Boxes, Clipboard, Pin, Users, Plus, Scan, Printer, Download } from '../components/Icons';
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
@@ -11,14 +12,53 @@ export default function Dashboard() {
 
   if (!stats) return <div className="center-page">Načítám…</div>;
 
+  const today = new Date().toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
   return (
     <div>
-      <h2>Přehled</h2>
+      <div className="page-head">
+        <div>
+          <h2>Přehled</h2>
+          <div className="page-sub">{today}</div>
+        </div>
+      </div>
+
+      <div className="quick-actions">
+        <Link to="/boxes/new" className="qa">
+          <span className="qa-icon q1"><Plus size={20} /></span>
+          <span>Nová krabice</span>
+        </Link>
+        <Link to="/scan" className="qa">
+          <span className="qa-icon q2"><Scan size={20} /></span>
+          <span>Skenovat QR</span>
+        </Link>
+        <Link to="/print" className="qa">
+          <span className="qa-icon q3"><Printer size={20} /></span>
+          <span>Tisknout štítky</span>
+        </Link>
+        <Link to="/export" className="qa">
+          <span className="qa-icon q4"><Download size={20} /></span>
+          <span>Export</span>
+        </Link>
+      </div>
+
       <div className="stats-grid">
-        <div className="stat-card"><div className="stat-num">{stats.boxes}</div><div className="stat-label">Krabice</div></div>
-        <div className="stat-card"><div className="stat-num">{fmtQty(stats.itemTotal)}</div><div className="stat-label">Kusů</div></div>
-        <div className="stat-card"><div className="stat-num">{stats.locations}</div><div className="stat-label">Lokace</div></div>
-        <div className="stat-card"><div className="stat-num">{stats.users}</div><div className="stat-label">Uživatelé</div></div>
+        <div className="stat-card">
+          <span className="stat-icon i1"><Boxes size={22} /></span>
+          <div className="stat-body"><div className="stat-num">{stats.boxes}</div><div className="stat-label">Krabice</div></div>
+        </div>
+        <div className="stat-card">
+          <span className="stat-icon i2"><Clipboard size={22} /></span>
+          <div className="stat-body"><div className="stat-num">{fmtQty(stats.itemTotal)}</div><div className="stat-label">Kusů</div></div>
+        </div>
+        <div className="stat-card">
+          <span className="stat-icon i3"><Pin size={22} /></span>
+          <div className="stat-body"><div className="stat-num">{stats.locations}</div><div className="stat-label">Lokace</div></div>
+        </div>
+        <div className="stat-card">
+          <span className="stat-icon i4"><Users size={22} /></span>
+          <div className="stat-body"><div className="stat-num">{stats.users}</div><div className="stat-label">Uživatelé</div></div>
+        </div>
       </div>
 
       {stats.byPosition.length > 0 && (
@@ -42,7 +82,7 @@ export default function Dashboard() {
           <ul className="activity">
             {stats.recent.map((m) => (
               <li key={m.id}>
-                <span className="badge">{m.action_label}</span>
+                <span className={`badge ${badgeTone(m.action)}`}>{m.action_label}</span>
                 {m.box_name ? <Link to={`/boxes/${m.box_id}`} className="strong">{m.box_name}</Link> : <span className="muted">smazaná krabice</span>}
                 <span className="muted detail">{fmtDetail(m)}</span>
                 <span className="muted time">{fmtDate(m.created_at)} · {m.username || '—'}</span>
@@ -53,6 +93,12 @@ export default function Dashboard() {
       </div>
     </div>
   );
+}
+
+function badgeTone(action) {
+  if (action === 'quantity_added' || action === 'created' || action === 'item_added') return 'b-ok';
+  if (action === 'quantity_removed') return 'b-danger';
+  return '';
 }
 
 function fmtDetail(m) {

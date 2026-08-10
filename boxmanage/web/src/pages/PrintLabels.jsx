@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import QRLabel from '../components/QRLabel';
+import { Printer } from '../components/Icons';
 
 export default function PrintLabels() {
   const [params] = useSearchParams();
@@ -104,7 +105,7 @@ export default function PrintLabels() {
             <label className="label-inline">Řádky: <select className="input" value={rows} onChange={(e) => setRows(Number(e.target.value))}>{[2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
           </div>
           <button className="btn btn-primary btn-lg" onClick={print} disabled={labels.length === 0}>
-            🖨️ Tisknout ({labels.length} štítků)
+            <Printer size={18} /> Tisknout ({labels.length} štítků)
           </button>
         </div>
       </div>

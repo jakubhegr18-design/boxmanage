@@ -5,6 +5,7 @@ import QRLabel from '../components/QRLabel';
 import PositionPicker from '../components/PositionPicker';
 import QuantityDialog from '../components/QuantityDialog';
 import Modal from '../components/Modal';
+import { ChevronLeft, Pin, Edit, Printer, Trash } from '../components/Icons';
 
 export default function BoxDetail() {
   const { id } = useParams();
@@ -97,20 +98,20 @@ export default function BoxDetail() {
 
   return (
     <div>
-      <Link to="/boxes" className="back-link">← Krabice</Link>
+      <Link to="/boxes" className="back-link"><ChevronLeft size={16} /> Krabice</Link>
       <div className="detail-head">
         <div>
           <h2>{box.name}</h2>
           {box.description && <p className="muted">{box.description}</p>}
           <div className="box-meta">
             {box.position && <span className="chip chip-lg">{box.position}</span>}
-            <span className="muted small">📍 {box.location_name || 'bez lokace'}</span>
+            <span className="muted small loc-tag"><Pin size={13} /> {box.location_name || 'bez lokace'}</span>
           </div>
         </div>
         <div className="detail-actions">
-          <Link className="btn" to={`/boxes/${box.id}/edit`}>✏️ Upravit</Link>
-          <Link className="btn" to={`/print?box=${box.id}`}>🖨️ Štítek</Link>
-          <button className="btn btn-danger" onClick={() => setConfirmDel(true)}>🗑</button>
+          <Link className="btn" to={`/boxes/${box.id}/edit`}><Edit size={16} /> Upravit</Link>
+          <Link className="btn" to={`/print?box=${box.id}`}><Printer size={16} /> Štítek</Link>
+          <button className="btn btn-icon btn-danger" onClick={() => setConfirmDel(true)} aria-label="Smazat"><Trash size={17} /></button>
         </div>
       </div>
 
@@ -163,8 +164,8 @@ export default function BoxDetail() {
                   <td className="row-actions">
                     <button className="btn btn-sm btn-plus" onClick={() => setQtyDialog({ itemId: i.id, action: 'add', item: i.name })}>+</button>
                     <button className="btn btn-sm btn-minus" onClick={() => setQtyDialog({ itemId: i.id, action: 'remove', item: i.name })}>−</button>
-                    <button className="btn btn-sm" onClick={() => setItemEditor({ id: i.id, name: i.name, quantity: i.quantity, unit: i.unit })}>✏️</button>
-                    <button className="btn btn-sm btn-danger" onClick={() => deleteItem(i.id)}>🗑</button>
+                    <button className="btn btn-sm" onClick={() => setItemEditor({ id: i.id, name: i.name, quantity: i.quantity, unit: i.unit })} aria-label="Upravit položku"><Edit size={15} /></button>
+                    <button className="btn btn-sm btn-danger" onClick={() => deleteItem(i.id)} aria-label="Smazat položku"><Trash size={15} /></button>
                   </td>
                 </tr>
               ))}

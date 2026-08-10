@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
+import { Edit, Trash } from '../components/Icons';
 
 export default function Locations() {
   const { user } = useAuth();
@@ -61,8 +62,8 @@ export default function Locations() {
                 <Link className="badge" to={`/boxes?location=${l.id}`}>{l.box_count} krabic</Link>
                 {isAdmin && (
                   <span className="row-actions">
-                    <button className="btn btn-sm" onClick={() => setEditing({ id: l.id, name: l.name, description: l.description || '' })}>✏️</button>
-                    <button className="btn btn-sm btn-danger" onClick={() => del(l)}>🗑</button>
+                    <button className="btn btn-sm" onClick={() => setEditing({ id: l.id, name: l.name, description: l.description || '' })} aria-label="Upravit"><Edit size={15} /></button>
+                    <button className="btn btn-sm btn-danger" onClick={() => del(l)} aria-label="Smazat"><Trash size={15} /></button>
                   </span>
                 )}
               </div>

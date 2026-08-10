@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, fmtDate } from '../api';
+import { Edit, Trash } from '../components/Icons';
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -60,8 +61,8 @@ export default function Users() {
                 <td>{u.role === 'admin' ? 'Admin' : 'Uživatel'}</td>
                 <td className="muted">{fmtDate(u.created_at)}</td>
                 <td className="row-actions">
-                  <button className="btn btn-sm" onClick={() => setEditUser({ id: u.id, username: u.username, role: u.role, password: '' })}>✏️</button>
-                  <button className="btn btn-sm btn-danger" onClick={() => del(u)}>🗑</button>
+                  <button className="btn btn-sm" onClick={() => setEditUser({ id: u.id, username: u.username, role: u.role, password: '' })} aria-label="Upravit"><Edit size={15} /></button>
+                  <button className="btn btn-sm btn-danger" onClick={() => del(u)} aria-label="Smazat"><Trash size={15} /></button>
                 </td>
               </tr>
             ))}
