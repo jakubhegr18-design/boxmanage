@@ -1,5 +1,10 @@
 # 📦 BoxManage
 
+![Status](https://img.shields.io/badge/status-Beta-orange)
+
+> ⚠️ **Beta verze** — projekt je funkční, ale ještě se ladí. Data zálohuj, ohlášuj chyby
+> a požadavky na funkce v [Issues](https://github.com/jakubhegr18-design/boxmanage/issues).
+
 Inventura krabic s QR kódy pro domácnost/dílnu. Vytiskneš QR štítky, nalepíš na krabice a pak je skenuješ mobilem. Webová aplikace (React PWA) + Node.js backend s SQLite databází, funguje jako **Home Assistant app (add-on)**.
 
 ## Funkce
@@ -52,14 +57,14 @@ Výchozí účet: **admin / admin** (změň ho v Nastavení).
 
 1. Nastavení → **Doplňky (Add-ons)** → tři tečky → **Repozitáře**
 2. Přidej adresář: `https://github.com/jakubhegr18-design/boxmanage`
-3. Vyhledej **BoxManage** → **Instalovat** → **Spustit** (sestaví se na tvém HA)
+3. Vyhledej **BoxManage** → **Instalovat** (stáhne hotový image z GHCR) → **Spustit**
 4. Otevři `https://<IP_HA>:8090` (mobil/PC ve stejné síti)
 
 > ⚠️ Web běží na **HTTPS se self-signed certifikátem** (generuje Caddy v add-onu). Při prvním
 > otevření na mobilu/PC odsouhlas certifikát („Pokračovat na stránku”). Bez toho prohlížeč
-> nepovolí kameru pro skenování QR.
+> nepovolí kameru pro skenování QR. Zápis `http://…` se sám přesměruje na `https://…`.
 
-> ℹ️ Sestavení add-onu probíhá přímo na tvém HA (vyžaduje ~1 min a přístup na internet).
+> ℹ️ Add-on je distribuován jako hotový image (GHCR) — instalace je rychlá, nic se na HA nesestavuje.
 > Data se ukládají do `/data` (SQLite) a přežijí restart i aktualizaci.
 
 ## API přehled

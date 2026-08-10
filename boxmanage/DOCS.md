@@ -1,5 +1,8 @@
 # BoxManage
 
+> ⚠️ **Beta verze** — funguje, ale stále se ladí. O chyby a náměty napiš do
+> [Issues](https://github.com/jakubhegr18-design/boxmanage/issues).
+
 Inventura krabic s QR kódy. Vytiskni QR štítky, nalep na krabice a skenuj je mobilem.
 
 ## Použití
@@ -15,6 +18,7 @@ Inventura krabic s QR kódy. Vytiskni QR štítky, nalep na krabice a skenuj je 
 
 Web běží na HTTPS se **self-signed certifikátem** (generuje Caddy). Při prvním otevření na
 telefonu/PC odsouhlas certifikát — bez toho prohlížeč nepovolí kameru pro skenování QR.
+Když zapíšeš `http://…`, add-on tě sám přesměruje na `https://…`.
 
 ## Data
 
