@@ -7,6 +7,13 @@
 
 Inventura krabic s QR kódy pro domácnost/dílnu. Vytiskneš QR štítky, nalepíš na krabice a pak je skenuješ mobilem. Webová aplikace (React PWA) + Node.js backend s SQLite databází, funguje jako **Home Assistant app (add-on)**.
 
+## Instalace jedním klikem
+
+[![Přidat repozitář do Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fjakubhegr18-design%2Fboxmanage)
+
+Tlačítko přidá repozitář do Home Assistant. Pak stačí **Nastavení → Doplňky → obchod**,
+vyhledat **BoxManage**, nainstalovat a spustit. Podrobný postup níže.
+
 ## Funkce
 
 - 🏷️ **QR štítky** — tisk na A4 samolepicí papír (2–4 sloupce, libovolný počet kopií)
@@ -55,7 +62,8 @@ Výchozí účet: **admin / admin** (změň ho v Nastavení).
 
 ## Instalace do Home Assistant OS
 
-1. Nastavení → **Doplňky (Add-ons)** → tři tečky → **Repozitáře**
+1. Klikni na tlačítko **[Přidat repozitář](#instalace-jednim-klikem)** výše, nebo ručně:
+   Nastavení → **Doplňky (Add-ons)** → tři tečky → **Repozitáře**
 2. Přidej adresář: `https://github.com/jakubhegr18-design/boxmanage`
 3. Vyhledej **BoxManage** → **Instalovat** (stáhne hotový image z GHCR) → **Spustit**
 4. Otevři `https://<IP_HA>:8090` (mobil/PC ve stejné síti)
