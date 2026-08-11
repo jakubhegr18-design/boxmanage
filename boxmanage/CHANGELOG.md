@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.6 (2026-08-11)
+
+### Opravy
+- **Přihlášení z mobilní aplikace**: server posílá CORS hlavičky, takže nativní
+  aplikace (origin `https://localhost`) se může připojit na HTTP adresu add-onu.
+- Adresa serveru bez protokolu (např. `192.168.1.123:8092`) se automaticky
+  doplní na `http://…`.
+
 ## 1.0.5 (2026-08-11)
 
 ### Opravy

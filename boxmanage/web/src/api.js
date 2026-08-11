@@ -7,16 +7,22 @@ export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+function normalizeApiBase(u) {
+  const s = String(u || '').trim().replace(/\/+$/, '');
+  if (!s) return '';
+  return /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(s) ? s : `http://${s}`;
+}
+
 export function getApiBase() {
   try {
-    return (localStorage.getItem(API_BASE_KEY) || '').trim().replace(/\/+$/, '');
+    return normalizeApiBase(localStorage.getItem(API_BASE_KEY));
   } catch {
     return '';
   }
 }
 
 export function setApiBase(url) {
-  if (url && typeof url === 'string') localStorage.setItem(API_BASE_KEY, url.trim().replace(/\/+$/, ''));
+  if (url && typeof url === 'string') localStorage.setItem(API_BASE_KEY, normalizeApiBase(url));
   else localStorage.removeItem(API_BASE_KEY);
 }
 
