@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('node:crypto');
 const { db, touchBox, logMovement } = require('../db');
 const { requireAuth } = require('../auth');
+const { actionLabel } = require('../action-labels');
 
 const router = express.Router();
 
@@ -56,7 +57,7 @@ router.get('/:id', requireAuth, (req, res) => {
     WHERE m.box_id = ?
     ORDER BY m.created_at DESC, m.id DESC
     LIMIT 50
-  `).all(box.id);
+  `).all(box.id).map((m) => ({ ...m, action_label: actionLabel(m.action) }));
   res.json(box);
 });
 
@@ -152,6 +153,14 @@ router.post('/:id/move', requireAuth, (req, res) => {
   db.prepare('UPDATE boxes SET location_id = ?, updated_at = datetime(\'now\') WHERE id = ?').run(loc, box.id);
   logMovement(box.id, req.user.id, 'moved', { from: oldName, to: newName });
   res.json(getBox(box.id));
+});
+
+// Záznam naskenování krabice z mobilu (dálkový skener) — zobrazí se na PC živě.
+router.post('/:id/scan', requireAuth, (req, res) => {
+  const box = getBox(req.params.id);
+  if (!box) return res.status(404).json({ error: 'Krabice nenalezena' });
+  logMovement(box.id, req.user.id, 'scanned', {});
+  res.json({ ok: true });
 });
 
 function getBox(id) {

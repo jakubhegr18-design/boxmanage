@@ -1,6 +1,7 @@
 const express = require('express');
 const { db } = require('../db');
 const { requireAuth } = require('../auth');
+const { actionLabel } = require('../action-labels');
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.get('/', requireAuth, (req, res) => {
     LIMIT 15
   `).all().map((m) => ({
     ...m,
-    action_label: label(m.action),
+    action_label: actionLabel(m.action),
     detail: m.detail ? JSON.parse(m.detail) : {},
   }));
 
@@ -32,20 +33,5 @@ router.get('/', requireAuth, (req, res) => {
 
   res.json({ boxes, locations, users, items, itemTotal, recent, byPosition });
 });
-
-function label(action) {
-  return {
-    created: 'Vytvořena',
-    updated: 'Upravena',
-    deleted: 'Smazána',
-    moved: 'Přesunuta',
-    position_changed: 'Změna pozice',
-    item_added: 'Přidána položka',
-    item_updated: 'Upravena položka',
-    item_deleted: 'Smazána položka',
-    quantity_added: 'Přidáno',
-    quantity_removed: 'Vydáno',
-  }[action] || action;
-}
 
 module.exports = router;

@@ -2,7 +2,7 @@ import { Routes, Route, Navigate, NavLink, useLocation, useNavigate } from 'reac
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useAuth } from './auth';
 import { setNavigator } from './navigate';
-import { BrandMark, Home, Scan, Boxes, Plus, Printer, Pin, Download, Users, Settings as SettingsIcon, LogOut, Sun, Moon, Menu, X } from './components/Icons';
+import { BrandMark, Home, Scan, Boxes, Plus, Printer, Pin, Download, Users, Settings as SettingsIcon, LogOut, Sun, Moon, Menu, X, Remote } from './components/Icons';
 
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -10,6 +10,7 @@ const BoxesPage = lazy(() => import('./pages/Boxes'));
 const BoxDetail = lazy(() => import('./pages/BoxDetail'));
 const BoxForm = lazy(() => import('./pages/BoxForm'));
 const ScanPage = lazy(() => import('./pages/Scan'));
+const RemotePage = lazy(() => import('./pages/Remote'));
 const PrintLabels = lazy(() => import('./pages/PrintLabels'));
 const PrintBle = lazy(() => import('./pages/PrintBle'));
 const Locations = lazy(() => import('./pages/Locations'));
@@ -24,6 +25,7 @@ function PageLoader() {
 const NAV = [
   { to: '/', label: 'Přehled', icon: Home },
   { to: '/scan', label: 'Sken', icon: Scan },
+  { to: '/remote', label: 'Dálkový skener', icon: Remote },
   { to: '/boxes', label: 'Krabice', icon: Boxes },
   { to: '/boxes/new', label: 'Nová krabice', icon: Plus },
   { to: '/print', label: 'Tisk štítků', icon: Printer },
@@ -208,6 +210,7 @@ export default function App() {
         <Route path="/boxes/:id" element={<Protected><Layout><BoxDetail /></Layout></Protected>} />
         <Route path="/boxes/:id/edit" element={<Protected><Layout><BoxForm /></Layout></Protected>} />
         <Route path="/scan" element={<Protected><Layout><ScanPage /></Layout></Protected>} />
+        <Route path="/remote" element={<Protected><Layout><RemotePage /></Layout></Protected>} />
         <Route path="/print" element={<Protected><Layout><PrintLabels /></Layout></Protected>} />
         <Route path="/print-ble/:id" element={<Protected><Layout><PrintBle /></Layout></Protected>} />
         <Route path="/locations" element={<Protected><Layout><Locations /></Layout></Protected>} />

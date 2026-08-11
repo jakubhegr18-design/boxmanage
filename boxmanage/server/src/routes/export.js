@@ -123,6 +123,7 @@ function fmtDetail(action, rawDetail) {
     case 'created': return d.position ? `pozice ${d.position}` : '';
     case 'updated': return Array.isArray(d.changes) ? d.changes.join(', ') : '';
     case 'deleted': return d.name || '';
+    case 'scanned': return '';
     default: return '';
   }
 }

@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.9 (2026-08-11)
+
+### Novinky
+- **Dálkový skener**: nová stránka *Dálkový skener* — na PC zobrazí QR kód s adresou
+  serveru. Po naskenování v mobilní aplikaci se server nastaví automaticky a zapne
+  se dálkový režim. Skenované krabice a změny z mobilu se na PC zobrazují živě
+  (obnova každé 2 s, nové položky jsou zvýrazněné); kliknutím se krabice otevře
+  pro úpravu.
+- Mobilní aplikace: stránka *Sken* má přepínač **Dálkový režim** a rozumí
+  párovacímu QR kódu z PC.
+- Historie pohybů má čitelné české štítky (dřív se v detailu krabice zobrazovaly
+  syrové názvy akcí).
+
 ## 1.0.8 (2026-08-11)
 
 ### Novinky
