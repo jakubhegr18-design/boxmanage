@@ -16,6 +16,15 @@ export default function PrintLabels() {
   const [newName, setNewName] = useState('');
   const [newPos, setNewPos] = useState('');
   const [printing, setPrinting] = useState(false);
+  const [showName, setShowName] = useState(true);
+  const [showPosition, setShowPosition] = useState(true);
+
+  useEffect(() => {
+    api('/api/settings').then((s) => {
+      setShowName(s.labels.showName);
+      setShowPosition(s.labels.showPosition);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     api('/api/boxes?limit=100&search=' + encodeURIComponent(search)).then((d) => setAll(d.items)).catch(() => {});
@@ -104,6 +113,10 @@ export default function PrintLabels() {
             <label className="label-inline">Sloupce: <select className="input" value={cols} onChange={(e) => setCols(Number(e.target.value))}>{[2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
             <label className="label-inline">Řádky: <select className="input" value={rows} onChange={(e) => setRows(Number(e.target.value))}>{[2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
           </div>
+          <div className="row">
+            <label className="label-inline"><input type="checkbox" checked={showName} onChange={(e) => setShowName(e.target.checked)} /> Název</label>
+            <label className="label-inline"><input type="checkbox" checked={showPosition} onChange={(e) => setShowPosition(e.target.checked)} /> Pozice</label>
+          </div>
           <button className="btn btn-primary btn-lg" onClick={print} disabled={labels.length === 0}>
             <Printer size={18} /> Tisknout ({labels.length} štítků)
           </button>
@@ -113,7 +126,7 @@ export default function PrintLabels() {
       <div className={`print-sheet-wrap ${printing ? 'active' : ''}`}>
         <div className="print-sheet" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)` }}>
           {labels.map((b, i) => (
-            <QRLabel key={`${b.id}-${i}`} value={b.id} name={b.name} position={b.position} size={140} />
+            <QRLabel key={`${b.id}-${i}`} value={b.id} name={b.name} position={b.position} size={140} showName={showName} showPosition={showPosition} />
           ))}
         </div>
       </div>

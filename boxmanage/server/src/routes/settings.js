@@ -13,8 +13,15 @@ function telegramPayload() {
   };
 }
 
+function labelsPayload() {
+  return {
+    showName: getSetting('label_show_name', '1') === '1',
+    showPosition: getSetting('label_show_position', '1') === '1',
+  };
+}
+
 router.get('/', requireAuth, (req, res) => {
-  res.json({ telegram: telegramPayload() });
+  res.json({ telegram: telegramPayload(), labels: labelsPayload() });
 });
 
 router.put('/telegram', requireAuth, requireAdmin, (req, res) => {
@@ -30,6 +37,13 @@ router.put('/telegram', requireAuth, requireAdmin, (req, res) => {
 router.post('/telegram/test', requireAuth, requireAdmin, async (req, res) => {
   const result = await sendTelegram('<b>BoxManage</b> — testovací zpráva. Funguje to!');
   res.json(result);
+});
+
+router.put('/labels', requireAuth, (req, res) => {
+  const { showName, showPosition } = req.body || {};
+  setSetting('label_show_name', showName ? '1' : '0');
+  setSetting('label_show_position', showPosition ? '1' : '0');
+  res.json({ labels: labelsPayload() });
 });
 
 module.exports = router;

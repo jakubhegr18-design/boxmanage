@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.10 (2026-08-11)
+
+### Novinky
+- **Nastavení štítku (QR)**: v *Nastavení → Štítek (QR)* lze vypnout zobrazení
+  názvu krabice a/nebo pozice na štítku — stačí QR kód, případně jen pozice
+  (např. A2) + QR. Týká se stažení PNG i tisku přes Bluetooth. Na stránce
+  *Tisk štítků* jde navíc název a pozici přepínat pro každý tisk zvlášť.
+
 ## 1.0.9 (2026-08-11)
 
 ### Novinky

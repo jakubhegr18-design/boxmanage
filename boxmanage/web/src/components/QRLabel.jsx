@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 
-export default function QRLabel({ value, name, position, size = 160, className = '' }) {
+export default function QRLabel({ value, name, position, size = 160, className = '', showName = true, showPosition = true }) {
   const [dataUrl, setDataUrl] = useState('');
 
   useEffect(() => {
@@ -18,8 +18,8 @@ export default function QRLabel({ value, name, position, size = 160, className =
   return (
     <div className={`qr-label ${className}`}>
       {dataUrl ? <img className="qr-img" src={dataUrl} alt="QR kód" style={{ width: size, height: size }} /> : <div className="qr-img" style={{ width: size, height: size }} />}
-      <div className="qr-name">{name}</div>
-      {position ? <div className="qr-pos">{position}</div> : null}
+      {showName && name ? <div className="qr-name">{name}</div> : null}
+      {showPosition && position ? <div className="qr-pos">{position}</div> : null}
     </div>
   );
 }

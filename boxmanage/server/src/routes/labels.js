@@ -1,7 +1,7 @@
 const express = require('express');
 const QRCode = require('qrcode');
 const sharp = require('sharp');
-const { db } = require('../db');
+const { db, getSetting } = require('../db');
 const { requireAuth } = require('../auth');
 
 const router = express.Router();
@@ -27,10 +27,12 @@ router.get('/boxes/:id/label.png', requireAuth, async (req, res) => {
       type: 'png', width: qrSize, margin: 2, errorCorrectionLevel: 'M',
     });
 
-    const nameLines = wrap(box.name, qrSize, nameFont, 2);
-    const pos = box.position ? truncate(String(box.position), qrSize, posFont) : '';
+    const nameLines = getSetting('label_show_name', '1') === '1' ? wrap(box.name, qrSize, nameFont, 2) : [];
+    const pos = getSetting('label_show_position', '1') === '1'
+      ? (box.position ? truncate(String(box.position), qrSize, posFont) : '')
+      : '';
     const textBlock = nameLines.length * nameLineH + (pos ? Math.round(posFont * 1.3) + nameLineH * 0.5 : 0);
-    const height = pad + qrSize + gap + textBlock + pad;
+    const height = pad + qrSize + (textBlock ? gap + textBlock : 0) + pad;
 
     const parts = [];
     parts.push(`<rect width="${width}" height="${height}" fill="#ffffff"/>`);

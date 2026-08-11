@@ -19,10 +19,14 @@ export default function Settings() {
   const [tgMsg, setTgMsg] = useState('');
   const [tgError, setTgError] = useState('');
   const [tgTesting, setTgTesting] = useState(false);
+  const [lbl, setLbl] = useState({ showName: true, showPosition: true });
+  const [lblMsg, setLblMsg] = useState('');
+  const [lblError, setLblError] = useState('');
 
   useEffect(() => {
     api('/api/settings').then((s) => {
       setTg({ enabled: s.telegram.enabled, chatId: s.telegram.chatId, token: '', hasToken: s.telegram.hasToken });
+      setLbl({ showName: s.labels.showName, showPosition: s.labels.showPosition });
     }).catch(() => {});
   }, []);
 
@@ -92,6 +96,16 @@ export default function Settings() {
     finally { setTgTesting(false); }
   }
 
+  async function saveLabels(e) {
+    e.preventDefault();
+    setLblMsg(''); setLblError('');
+    try {
+      const s = await api('/api/settings/labels', { method: 'PUT', body: lbl });
+      setLbl(s.labels);
+      setLblMsg('Nastavení štítku uloženo.');
+    } catch (err) { setLblError(err.message); }
+  }
+
   return (
     <div>
       <h2>Nastavení</h2>
@@ -135,6 +149,27 @@ export default function Settings() {
           </div>
         </div>
       )}
+
+      <div className="card">
+        <h3>Štítek (QR)</h3>
+        <p className="muted">
+          Co se tiskne na štítek krabice — použije se pro stažení PNG i tisk přes Bluetooth.
+          Název a pozici lze měnit i při tisku štítků na A4.
+        </p>
+        <form onSubmit={saveLabels}>
+          <label className="label-inline" style={{ margin: '8px 0' }}>
+            <input type="checkbox" checked={lbl.showName} onChange={(e) => setLbl({ ...lbl, showName: e.target.checked })} />
+            Zobrazit název krabice
+          </label>
+          <label className="label-inline" style={{ margin: '8px 0' }}>
+            <input type="checkbox" checked={lbl.showPosition} onChange={(e) => setLbl({ ...lbl, showPosition: e.target.checked })} />
+            Zobrazit pozici (např. A2)
+          </label>
+          {lblError && <div className="alert alert-error">{lblError}</div>}
+          {lblMsg && <div className="alert alert-info">{lblMsg}</div>}
+          <button className="btn btn-primary" type="submit">Uložit</button>
+        </form>
+      </div>
 
       {user?.role === 'admin' && (
         <div className="card">
