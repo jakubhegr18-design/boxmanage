@@ -103,9 +103,8 @@ function badgeTone(action) {
 
 function fmtDetail(m) {
   const d = m.detail || {};
-  if (m.action === 'quantity_added' || m.action === 'quantity_removed') {
-    return `${d.item} +${fmtQty(d.quantity)} ${d.unit || ''}`.trim();
-  }
+  if (m.action === 'quantity_added') return `${d.item} +${fmtQty(d.quantity)} ${d.unit || ''}`.trim();
+  if (m.action === 'quantity_removed') return `${d.item} −${fmtQty(d.quantity)} ${d.unit || ''}`.trim();
   if (m.action === 'position_changed') return `${d.from || '—'} → ${d.to || '—'}`;
   if (m.action === 'moved') return `${d.from} → ${d.to}`;
   if (m.action === 'created') return d.position ? `pozice ${d.position}` : '';
