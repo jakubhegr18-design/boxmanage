@@ -8,7 +8,7 @@
 }
 
 :8090 {
-	tls internal
+	tls {$TLS_CERT} {$TLS_KEY}
 	encode gzip
 	reverse_proxy 127.0.0.1:8091
 }

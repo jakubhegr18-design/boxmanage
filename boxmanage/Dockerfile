@@ -14,7 +14,7 @@ FROM node:24-alpine
 ARG TARGETARCH
 ARG CADDY_VERSION=2.9.1
 
-RUN apk add --no-cache wget tar ca-certificates \
+RUN apk add --no-cache wget tar ca-certificates openssl \
   && wget -q -O /tmp/caddy.tar.gz "https://github.com/caddyserver/caddy/releases/download/v${CADDY_VERSION}/caddy_${CADDY_VERSION}_linux_${TARGETARCH}.tar.gz" \
   && tar -xzf /tmp/caddy.tar.gz -C /usr/bin caddy \
   && rm /tmp/caddy.tar.gz
