@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.8 (2026-08-11)
+
+### Novinky
+- **Telegram — upozornění na nízký stav**: u položky v detailu krabice lze nastavit
+  limit („Upozornit při nízkém stavu“). Jakmile množství klesne na nebo pod limit,
+  pošle se do vybraného chatu zpráva (krabice, pozice, položka, zbývající množství).
+  Token bota a chat ID se nastavují v *Nastavení → Telegram* (pouze admin), včetně
+  tlačítka pro odeslání testovací zprávy. Opakování upozornění je omezeno na jedno
+  za 24 h; když stav klesne pod limit, přijde hned.
+
 ## 1.0.7 (2026-08-11)
 
 ### Opravy

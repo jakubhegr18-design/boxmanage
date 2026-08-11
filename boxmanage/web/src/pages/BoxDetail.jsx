@@ -77,7 +77,12 @@ export default function BoxDetail() {
     try {
       await api(`/api/items/${itemEditor.id}`, {
         method: 'PATCH',
-        body: { name: itemEditor.name, quantity: itemEditor.quantity, unit: itemEditor.unit },
+        body: {
+          name: itemEditor.name,
+          quantity: itemEditor.quantity,
+          unit: itemEditor.unit,
+          alertThreshold: itemEditor.threshold === '' ? null : Number(itemEditor.threshold),
+        },
       });
       setItemEditor(null);
       load();
@@ -171,12 +176,12 @@ export default function BoxDetail() {
             <tbody>
               {box.items.map((i) => (
                 <tr key={i.id}>
-                  <td className="strong">{i.name}</td>
+                  <td className="strong">{i.name} {i.alert_threshold != null && <span className="badge b-warn">≤ {fmtQty(i.alert_threshold)}</span>}</td>
                   <td>{fmtQty(i.quantity)} {i.unit}</td>
                   <td className="row-actions">
                     <button className="btn btn-sm btn-plus" onClick={() => setQtyDialog({ itemId: i.id, action: 'add', item: i.name })}>+</button>
                     <button className="btn btn-sm btn-minus" onClick={() => setQtyDialog({ itemId: i.id, action: 'remove', item: i.name })}>−</button>
-                    <button className="btn btn-sm" onClick={() => setItemEditor({ id: i.id, name: i.name, quantity: i.quantity, unit: i.unit })} aria-label="Upravit položku"><Edit size={15} /></button>
+                    <button className="btn btn-sm" onClick={() => setItemEditor({ id: i.id, name: i.name, quantity: i.quantity, unit: i.unit, threshold: i.alert_threshold ?? '' })} aria-label="Upravit položku"><Edit size={15} /></button>
                     <button className="btn btn-sm btn-danger" onClick={() => deleteItem(i.id)} aria-label="Smazat položku"><Trash size={15} /></button>
                   </td>
                 </tr>
@@ -223,6 +228,8 @@ export default function BoxDetail() {
             <input className="input" type="number" step="any" min="0" placeholder="Množství" value={itemEditor?.quantity} onChange={(e) => setItemEditor({ ...itemEditor, quantity: e.target.value })} />
             <input className="input" placeholder="Jednotka" value={itemEditor?.unit || ''} onChange={(e) => setItemEditor({ ...itemEditor, unit: e.target.value })} />
           </div>
+          <label className="label">Upozornit při nízkém stavu (nechat prázdné = vypnuto)</label>
+          <input className="input" type="number" step="any" min="0" placeholder="Např. 5 — upozorní na Telegram" value={itemEditor?.threshold ?? ''} onChange={(e) => setItemEditor({ ...itemEditor, threshold: e.target.value })} />
           <div className="modal-actions">
             <button type="button" className="btn" onClick={() => setItemEditor(null)}>Zrušit</button>
             <button type="submit" className="btn btn-primary">Uložit</button>

@@ -72,6 +72,17 @@ db.exec(`
   );
 `);
 
+// Migrace pro starší databáze (CREATE TABLE IF NOT EXISTS nepřidá sloupce do existující tabulky).
+function ensureColumn(table, column, definition) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
+  if (!cols.includes(column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+}
+
+ensureColumn('items', 'alert_threshold', 'REAL DEFAULT NULL');
+ensureColumn('items', 'last_alert_at', 'TEXT DEFAULT NULL');
+
 function getSetting(key, def) {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
   return row ? row.value : def;

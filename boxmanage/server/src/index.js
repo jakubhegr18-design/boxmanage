@@ -10,6 +10,8 @@ const movementsRoutes = require('./routes/movements');
 const exportRoutes = require('./routes/export');
 const labelsRoutes = require('./routes/labels');
 const statsRoutes = require('./routes/stats');
+const settingsRoutes = require('./routes/settings');
+const { sweepLowStock } = require('./telegram');
 
 const app = express();
 app.use(express.json());
@@ -37,6 +39,7 @@ app.use('/api/movements', movementsRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api', labelsRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/settings', settingsRoutes);
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 
@@ -59,3 +62,9 @@ const PORT = Number(process.env.PORT || 8090);
 app.listen(PORT, () => {
   console.log(`[boxmanage] Server listening on http://0.0.0.0:${PORT}`);
 });
+
+// Kontrola nízkého stavu sledovaných položek — hned po startu a pak každých 6 h.
+sweepLowStock().catch((err) => console.error('[boxmanage] Úvodní sweep nízkého stavu selhal:', err.message));
+setInterval(() => {
+  sweepLowStock().catch((err) => console.error('[boxmanage] Sweep nízkého stavu selhal:', err.message));
+}, 6 * 60 * 60 * 1000);

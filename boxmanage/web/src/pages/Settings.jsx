@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../auth';
 import { api, getApiBase, setApiBase } from '../api';
 import { isNative } from '../ble/backend';
@@ -15,6 +15,16 @@ export default function Settings() {
   const [apiMsg, setApiMsg] = useState('');
   const [apiError, setApiError] = useState('');
   const [testing, setTesting] = useState(false);
+  const [tg, setTg] = useState({ enabled: false, chatId: '', token: '', hasToken: false });
+  const [tgMsg, setTgMsg] = useState('');
+  const [tgError, setTgError] = useState('');
+  const [tgTesting, setTgTesting] = useState(false);
+
+  useEffect(() => {
+    api('/api/settings').then((s) => {
+      setTg({ enabled: s.telegram.enabled, chatId: s.telegram.chatId, token: '', hasToken: s.telegram.hasToken });
+    }).catch(() => {});
+  }, []);
 
   async function changePassword(e) {
     e.preventDefault();
@@ -59,6 +69,29 @@ export default function Settings() {
     }
   }
 
+  async function saveTelegram(e) {
+    e.preventDefault();
+    setTgMsg(''); setTgError('');
+    try {
+      const s = await api('/api/settings/telegram', {
+        method: 'PUT',
+        body: { enabled: tg.enabled, chatId: tg.chatId, token: tg.token },
+      });
+      setTg({ ...s.telegram, token: '' });
+      setTgMsg('Nastavení Telegramu uloženo.');
+    } catch (err) { setTgError(err.message); }
+  }
+
+  async function testTelegram() {
+    setTgMsg(''); setTgError(''); setTgTesting(true);
+    try {
+      const r = await api('/api/settings/telegram/test', { method: 'POST' });
+      if (r.ok) setTgMsg('Testovací zpráva odeslána.');
+      else setTgError(r.error || 'Test selhal.');
+    } catch (err) { setTgError(err.message); }
+    finally { setTgTesting(false); }
+  }
+
   return (
     <div>
       <h2>Nastavení</h2>
@@ -100,6 +133,51 @@ export default function Settings() {
             <button className="btn btn-primary" onClick={saveApiUrl}>Uložit</button>
             <button className="btn" onClick={testApi} disabled={testing}>{testing ? 'Testuji…' : 'Otestovat připojení'}</button>
           </div>
+        </div>
+      )}
+
+      {user?.role === 'admin' && (
+        <div className="card">
+          <h3>Telegram — upozornění na nízký stav</h3>
+          <p className="muted">
+            Když vybraná položka klesne na nebo pod svůj limit, pošle se zpráva do chatu.
+            Limit se nastavuje u položky v detailu krabice („Upozornit při nízkém stavu“).
+            Token vytvoříš v Telegramu u @BotFather, chat ID je číslo, které ti bot odpoví po startu rozhovoru.
+          </p>
+          <form onSubmit={saveTelegram}>
+            <label className="label">Bot token</label>
+            <input
+              className="input"
+              type="password"
+              autoComplete="off"
+              placeholder={tg.hasToken ? '…nastaveno (zadej nový pro změnu)' : '123456:ABC-…'}
+              value={tg.token}
+              onChange={(e) => setTg({ ...tg, token: e.target.value })}
+            />
+            <label className="label">Chat ID</label>
+            <input
+              className="input"
+              placeholder="123456789"
+              value={tg.chatId}
+              onChange={(e) => setTg({ ...tg, chatId: e.target.value })}
+            />
+            <label className="label-inline" style={{ margin: '12px 0' }}>
+              <input
+                type="checkbox"
+                checked={tg.enabled}
+                onChange={(e) => setTg({ ...tg, enabled: e.target.checked })}
+              />
+              Odesílat upozornění
+            </label>
+            {tgError && <div className="alert alert-error">{tgError}</div>}
+            {tgMsg && <div className="alert alert-info">{tgMsg}</div>}
+            <div className="row">
+              <button className="btn btn-primary" type="submit">Uložit</button>
+              <button type="button" className="btn" onClick={testTelegram} disabled={tgTesting}>
+                {tgTesting ? 'Odesílám…' : 'Poslat testovací zprávu'}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

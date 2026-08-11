@@ -10,3 +10,6 @@ data/
 *.db-journal
 *.db-wal
 *.db-shm
+
+# build artefakty
+*.apk
