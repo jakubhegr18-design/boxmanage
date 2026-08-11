@@ -81,7 +81,7 @@ router.get('/xlsx', requireAuth, async (req, res) => {
     LEFT JOIN boxes b ON b.id = m.box_id
     LEFT JOIN users u ON u.id = m.user_id
     ORDER BY m.created_at DESC
-  `).all().map((m) => ({ ...m, detail: (m.detail ? JSON.parse(m.detail) : {}) })));
+  `).all().map((m) => ({ ...m, detail: fmtDetail(m.action, m.detail) })));
 
   for (const ws of [wsBoxes, wsItems, wsMov]) {
     ws.getRow(1).font = { bold: true };
@@ -97,6 +97,34 @@ function esc(v) {
   if (v === null || v === undefined) return '';
   const s = String(v);
   return s.includes(';') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function fmtQty(n) {
+  const num = Number(n);
+  if (!isFinite(num)) return '';
+  return Number.isInteger(num) ? String(num) : num.toFixed(2).replace(/\.?0+$/, '');
+}
+
+// Z objektu detail + action vytvoří čitelný text (obdoba fmtMovement/fmtDetail na frontendu),
+// aby ExcelJS nemusel do buňky ukládat syrový objekt.
+function fmtDetail(action, rawDetail) {
+  let d = {};
+  if (rawDetail) {
+    try { d = typeof rawDetail === 'string' ? JSON.parse(rawDetail) : rawDetail; } catch { d = {}; }
+  }
+  switch (action) {
+    case 'quantity_added': return `${d.item || ''} +${fmtQty(d.quantity)} ${d.unit || ''}`.trim();
+    case 'quantity_removed': return `${d.item || ''} −${fmtQty(d.quantity)} ${d.unit || ''}`.trim();
+    case 'item_added': return `${d.item || ''} (${fmtQty(d.quantity)} ${d.unit || ''})`.trim();
+    case 'item_updated':
+    case 'item_deleted': return d.item || '';
+    case 'position_changed': return `${d.from || '—'} → ${d.to || '—'}`;
+    case 'moved': return `${d.from || '—'} → ${d.to || '—'}`;
+    case 'created': return d.position ? `pozice ${d.position}` : '';
+    case 'updated': return Array.isArray(d.changes) ? d.changes.join(', ') : '';
+    case 'deleted': return d.name || '';
+    default: return '';
+  }
 }
 
 module.exports = router;
