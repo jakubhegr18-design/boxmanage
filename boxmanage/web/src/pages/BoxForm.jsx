@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import PositionPicker from '../components/PositionPicker';
 
@@ -7,6 +7,9 @@ export default function BoxForm() {
   const { id } = useParams();
   const isEdit = !!id;
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // ID požadované z naskenovaného QR štítku (Scan.jsx přesměruje na /boxes/new?from=...).
+  const fromId = isEdit ? '' : (searchParams.get('from') || '').trim();
   const [form, setForm] = useState({ name: '', description: '', position: '', locationId: '' });
   const [locations, setLocations] = useState([]);
   const [error, setError] = useState('');
@@ -37,6 +40,8 @@ export default function BoxForm() {
         const box = await api(`/api/boxes/${id}`, { method: 'PATCH', body });
         navigate(`/boxes/${box.id}`);
       } else {
+        // Po naskenování neznámého QR pošleme jeho ID, aby nová krabice dostala stejné ID jako na štítku.
+        if (fromId) body.id = fromId;
         const box = await api('/api/boxes', { method: 'POST', body });
         navigate(`/boxes/${box.id}`);
       }
@@ -50,6 +55,12 @@ export default function BoxForm() {
     <div>
       <Link to={isEdit ? `/boxes/${id}` : '/boxes'} className="back-link">← Zpět</Link>
       <h2>{isEdit ? 'Upravit krabici' : 'Nová krabice'}</h2>
+
+      {fromId && (
+        <div className="alert alert-info">
+          Nová krabice dostane ID z naskenovaného štítku: <code>{fromId}</code>
+        </div>
+      )}
 
       <form onSubmit={submit} className="card form">
         <label className="label">Název *</label>

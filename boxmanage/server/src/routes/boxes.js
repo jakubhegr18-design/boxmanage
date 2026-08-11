@@ -61,17 +61,30 @@ router.get('/:id', requireAuth, (req, res) => {
 });
 
 router.post('/', requireAuth, (req, res) => {
-  const { name, description, position, locationId } = req.body || {};
+  const { name, description, position, locationId, id } = req.body || {};
   if (!name || !String(name).trim()) return res.status(400).json({ error: 'Název je povinný' });
-  const id = 'bm-' + crypto.randomUUID();
+
+  // ID se dá zadat (např. z naskenovaného QR štítku); jinak se vygeneruje nové UUID.
+  let boxId = 'bm-' + crypto.randomUUID();
+  if (id !== undefined && id !== null && String(id).trim() !== '') {
+    const requestedId = String(id).trim();
+    if (requestedId.length > 100 || !/^[a-zA-Z0-9-]+$/.test(requestedId)) {
+      return res.status(400).json({ error: 'Neplatné ID: jen písmena, číslice a pomlčky (max 100 znaků)' });
+    }
+    if (db.prepare('SELECT 1 FROM boxes WHERE id = ?').get(requestedId)) {
+      return res.status(409).json({ error: 'Krabice s tímto ID už existuje' });
+    }
+    boxId = requestedId;
+  }
+
   const pos = String(position || '').trim().toUpperCase();
   db.prepare(`
     INSERT INTO boxes (id, name, description, position, location_id, created_by)
     VALUES (?, ?, ?, ?, ?, ?)
-  `).run(id, String(name).trim(), String(description || '').trim(), pos,
+  `).run(boxId, String(name).trim(), String(description || '').trim(), pos,
     locationId ? Number(locationId) : null, req.user.id);
-  logMovement(id, req.user.id, 'created', { name: String(name).trim(), position: pos, location_id: locationId || null });
-  res.status(201).json(getBox(id));
+  logMovement(boxId, req.user.id, 'created', { name: String(name).trim(), position: pos, location_id: locationId || null });
+  res.status(201).json(getBox(boxId));
 });
 
 router.patch('/:id', requireAuth, (req, res) => {
