@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../auth';
-import { BrandMark, Users as UserIcon, Lock } from '../components/Icons';
+import { getApiBase, setApiBase } from '../api';
+import { BrandMark, Users as UserIcon, Lock, Settings as SettingsIcon } from '../components/Icons';
 
 export default function Login() {
   const { user, login } = useAuth();
@@ -9,6 +10,10 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [server, setServer] = useState(getApiBase());
+  const [serverMsg, setServerMsg] = useState('');
+  const [serverError, setServerError] = useState('');
+  const [testing, setTesting] = useState(false);
 
   if (user) return <Navigate to="/" replace />;
 
@@ -22,6 +27,32 @@ export default function Login() {
       setError(err.message);
     } finally {
       setBusy(false);
+    }
+  }
+
+  function saveServer() {
+    setServerError(''); setServerMsg('');
+    setApiBase(server);
+    setServerMsg('Adresa uložena.');
+  }
+
+  async function testServer() {
+    setServerError(''); setServerMsg('');
+    const base = server.trim().replace(/\/+$/, '');
+    if (!base) {
+      setServerError('Zadej adresu serveru, např. http://192.168.1.123:8092');
+      return;
+    }
+    setTesting(true);
+    try {
+      const res = await fetch(base + '/api/auth/me');
+      if (res.status === 401) setServerMsg('Spojení OK — server je dostupný, můžeš se přihlásit.');
+      else if (res.ok) setServerMsg('Spojení OK.');
+      else setServerError(`Server odpověděl: ${res.status}`);
+    } catch (err) {
+      setServerError(`Nelze se připojit: ${err.message}`);
+    } finally {
+      setTesting(false);
     }
   }
 
@@ -61,6 +92,28 @@ export default function Login() {
             {busy ? 'Přihlašuji…' : 'Přihlásit se'}
           </button>
         </form>
+
+        <div className="login-server">
+          <h2><SettingsIcon size={15} /> Adresa serveru</h2>
+          <p className="muted small">V mobilní aplikaci se BoxManage připojuje na adresu add-onu, např. <code>http://192.168.1.123:8092</code>. Vyplň, ulož a pak se přihlas.</p>
+          <input
+            className="input"
+            placeholder="http://192.168.1.123:8092"
+            value={server}
+            onChange={(e) => setServer(e.target.value)}
+            inputMode="url"
+            autoCapitalize="none"
+          />
+          {serverError && <div className="alert alert-error">{serverError}</div>}
+          {serverMsg && <div className="alert alert-info">{serverMsg}</div>}
+          <div className="row">
+            <button className="btn" type="button" onClick={saveServer}>Uložit adresu</button>
+            <button className="btn" type="button" onClick={testServer} disabled={testing}>
+              {testing ? 'Testuji…' : 'Otestovat'}
+            </button>
+          </div>
+        </div>
+
         <p className="login-foot">
           Výchozí účet: <code>admin</code> / <code>admin</code> — změň ho v Nastavení.
         </p>

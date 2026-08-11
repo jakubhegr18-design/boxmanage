@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.5 (2026-08-11)
+
+### Opravy
+- **Přihlášení v mobilní aplikaci**: přihlašovací stránka obsahuje pole
+  **Adresa serveru** (s testem připojení), takže jde zadat IP adresu serveru
+  ještě před přihlášením — dřív šla adresa nastavit až po přihlášení, což při
+  špatné adrese znemožnilo přihlášení úplně.
+
 ## 1.0.4 (2026-08-11)
 
 ### Novinky
