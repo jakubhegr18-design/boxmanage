@@ -40,6 +40,8 @@ export const Clipboard = (p) => base(<><rect x="8" y="2" width="8" height="4" rx
 export const History = (p) => base(<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></>, p);
 export const QrCode = (p) => base(<><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><path d="M14 14h3v3h-3z" /><path d="M21 14v3" /><path d="M14 21h3" /><path d="M21 21h.01" /></>, p);
 export const Lock = (p) => base(<><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></>, p);
+export const Bluetooth = (p) => base(<path d="m7 7 10 10-5 5V2l5 5L7 17" />, p);
+export const RefreshCw = (p) => base(<><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" /></>, p);
 
 export function BrandMark({ size = 34, className = '' }) {
   return (

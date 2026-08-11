@@ -12,3 +12,9 @@
 	encode gzip
 	reverse_proxy 127.0.0.1:8091
 }
+
+# Čistě HTTP port pro mobilní aplikaci (Android odmítá self-signed certifikát)
+http://:8092 {
+	encode gzip
+	reverse_proxy 127.0.0.1:8091
+}

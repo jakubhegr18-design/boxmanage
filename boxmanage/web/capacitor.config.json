@@ -1,0 +1,9 @@
+{
+  "appId": "cz.boxmanage.app",
+  "appName": "BoxManage",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": true,
+    "useLegacyBridge": false
+  }
+}

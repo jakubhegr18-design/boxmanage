@@ -1,6 +1,7 @@
-import { Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
-import { lazy, Suspense, useState } from 'react';
+import { Routes, Route, Navigate, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useAuth } from './auth';
+import { setNavigator } from './navigate';
 import { BrandMark, Home, Scan, Boxes, Plus, Printer, Pin, Download, Users, Settings as SettingsIcon, LogOut, Sun, Moon, Menu, X } from './components/Icons';
 
 const Login = lazy(() => import('./pages/Login'));
@@ -10,6 +11,7 @@ const BoxDetail = lazy(() => import('./pages/BoxDetail'));
 const BoxForm = lazy(() => import('./pages/BoxForm'));
 const ScanPage = lazy(() => import('./pages/Scan'));
 const PrintLabels = lazy(() => import('./pages/PrintLabels'));
+const PrintBle = lazy(() => import('./pages/PrintBle'));
 const Locations = lazy(() => import('./pages/Locations'));
 const UsersPage = lazy(() => import('./pages/Users'));
 const Export = lazy(() => import('./pages/Export'));
@@ -74,6 +76,9 @@ function Layout({ children }) {
   const [drawer, setDrawer] = useState(false);
   const [theme, toggle] = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => setNavigator(navigate), [navigate]);
 
   const links = [...NAV];
   if (user?.role === 'admin') {
@@ -92,7 +97,7 @@ function Layout({ children }) {
         <button className="icon-btn" onClick={() => setDrawer(true)} aria-label="Menu">
           <Menu size={22} />
         </button>
-        <h1 className="brand" onClick={() => (window.location.href = '/')}>
+        <h1 className="brand" onClick={() => navigate('/')}>
           <BrandMark size={32} />
           <span>BoxManage</span>
         </h1>
@@ -204,6 +209,7 @@ export default function App() {
         <Route path="/boxes/:id/edit" element={<Protected><Layout><BoxForm /></Layout></Protected>} />
         <Route path="/scan" element={<Protected><Layout><ScanPage /></Layout></Protected>} />
         <Route path="/print" element={<Protected><Layout><PrintLabels /></Layout></Protected>} />
+        <Route path="/print-ble/:id" element={<Protected><Layout><PrintBle /></Layout></Protected>} />
         <Route path="/locations" element={<Protected><Layout><Locations /></Layout></Protected>} />
         <Route path="/export" element={<Protected><Layout><Export /></Layout></Protected>} />
         <Route path="/settings" element={<Protected><Layout><Settings /></Layout></Protected>} />

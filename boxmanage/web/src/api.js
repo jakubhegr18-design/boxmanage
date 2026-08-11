@@ -1,7 +1,30 @@
+import { navigate } from './navigate';
+
 const TOKEN_KEY = 'boxmanage_token';
+const API_BASE_KEY = 'boxmanage_api_url';
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
+}
+
+export function getApiBase() {
+  try {
+    return (localStorage.getItem(API_BASE_KEY) || '').trim().replace(/\/+$/, '');
+  } catch {
+    return '';
+  }
+}
+
+export function setApiBase(url) {
+  if (url && typeof url === 'string') localStorage.setItem(API_BASE_KEY, url.trim().replace(/\/+$/, ''));
+  else localStorage.removeItem(API_BASE_KEY);
+}
+
+// V nativní mobilní aplikaci se API volá na absolutní adresu BoxManage serveru,
+// v prohlížeči zůstává relativní (stejné origin).
+export function apiUrl(path) {
+  const base = getApiBase();
+  return base ? base + path : path;
 }
 
 export function setToken(token) {
@@ -17,10 +40,10 @@ export async function api(path, options = {}) {
     headers['Content-Type'] = 'application/json';
     options.body = JSON.stringify(options.body);
   }
-  const res = await fetch(path, { ...options, headers });
+  const res = await fetch(apiUrl(path), { ...options, headers });
   if (res.status === 401) {
     setToken(null);
-    if (window.location.pathname !== '/login') window.location.href = '/login';
+    if (window.location.pathname !== '/login') navigate('/login');
     throw new Error('Přihlášení vypršelo');
   }
   const type = res.headers.get('content-type') || '';
@@ -44,7 +67,7 @@ export async function api(path, options = {}) {
 }
 
 export async function downloadFile(path, filename) {
-  const res = await fetch(path, {
+  const res = await fetch(apiUrl(path), {
     headers: { Authorization: `Bearer ${getToken()}` },
   });
   if (!res.ok) throw new Error(`Stažení selhalo (${res.status})`);

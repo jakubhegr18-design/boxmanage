@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api, getToken, setToken } from './api';
+import { navigate } from './navigate';
 
 const AuthContext = createContext(null);
 
@@ -28,14 +29,20 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
+  async function refresh() {
+    const u = await api('/api/auth/me');
+    setUser(u);
+    return u;
+  }
+
   function logout() {
     setToken(null);
     setUser(null);
-    window.location.href = '/login';
+    navigate('/login');
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );
