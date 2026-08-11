@@ -5,7 +5,7 @@ import { api, fmtDate, fmtQty } from '../api';
 
 function remoteUrl() {
   const host = window.location.hostname || 'localhost';
-  return `http://${host}:8092`;
+  return `https://${host}:8090`;
 }
 
 export default function Remote() {

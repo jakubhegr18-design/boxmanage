@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.11 (2026-08-11)
+
+### Novinky
+- **Jeden port 8090 (HTTPS)**: mobilní aplikace už nepotřebuje samostatný HTTP port
+  8092. Android aplikace teď akceptuje self-signed HTTPS certifikát add-onu, takže
+  web i mobil běží na jedné adrese `https://IP:8090`.
+- Adresa serveru se zadává jako `https://192.168.1.123:8090`; staré uložené HTTP
+  adresy s portem 8092 se přepíšou automaticky.
+- Po aktualizaci add-onu na 1.0.11 je port 8092 odstraněný — nastav adresu
+  `https://IP:8090` (v aplikaci i v dálkovém skeneru).
+
 ## 1.0.10 (2026-08-11)
 
 ### Novinky

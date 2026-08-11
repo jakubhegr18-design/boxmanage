@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../auth';
-import { getApiBase, setApiBase } from '../api';
+import { getApiBase, setApiBase, normalizeServerUrl } from '../api';
 import { isNative } from '../ble/backend';
 import { BrandMark, Users as UserIcon, Lock, Settings as SettingsIcon } from '../components/Icons';
 
@@ -39,9 +39,9 @@ export default function Login() {
 
   async function testServer() {
     setServerError(''); setServerMsg('');
-    const base = server.trim().replace(/\/+$/, '');
+    const base = normalizeServerUrl(server);
     if (!base) {
-      setServerError('Zadej adresu serveru, např. http://192.168.1.123:8092');
+      setServerError('Zadej adresu serveru, např. https://192.168.1.123:8090');
       return;
     }
     setTesting(true);
@@ -97,10 +97,10 @@ export default function Login() {
         {isNative() && (
           <div className="login-server">
             <h2><SettingsIcon size={15} /> Adresa serveru</h2>
-            <p className="muted small">V mobilní aplikaci se BoxManage připojuje na adresu add-onu, např. <code>http://192.168.1.123:8092</code>. Vyplň, ulož a pak se přihlas.</p>
+            <p className="muted small">V mobilní aplikaci se BoxManage připojuje na adresu add-onu, např. <code>https://192.168.1.123:8090</code>. Vyplň, ulož a pak se přihlas.</p>
             <input
               className="input"
-              placeholder="http://192.168.1.123:8092"
+              placeholder="https://192.168.1.123:8090"
               value={server}
               onChange={(e) => setServer(e.target.value)}
               inputMode="url"

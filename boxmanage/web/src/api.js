@@ -8,10 +8,20 @@ export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
 
-function normalizeApiBase(u) {
-  const s = String(u || '').trim().replace(/\/+$/, '');
+// Normalizace adresy serveru pro nativní mobilní aplikaci:
+// - vynutí https (jediný port add-onu je 8090 s HTTPS),
+// - staré HTTP adresy s portem 8092 (předchozí verze) se přepíšou na 8090,
+// - adresa bez protokolu se doplní na https://….
+export function normalizeServerUrl(u) {
+  let s = String(u || '').trim().replace(/\/+$/, '');
   if (!s) return '';
-  return /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(s) ? s : `http://${s}`;
+  s = s.replace(/^http:\/\//i, 'https://').replace(/:8092$/i, ':8090');
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(s)) s = `https://${s}`;
+  return s;
+}
+
+function normalizeApiBase(u) {
+  return normalizeServerUrl(u);
 }
 
 export function getApiBase() {
