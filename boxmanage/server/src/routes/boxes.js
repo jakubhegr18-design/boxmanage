@@ -68,8 +68,8 @@ router.post('/', requireAuth, (req, res) => {
   let boxId = 'bm-' + crypto.randomUUID();
   if (id !== undefined && id !== null && String(id).trim() !== '') {
     const requestedId = String(id).trim();
-    if (requestedId.length > 100 || !/^[a-zA-Z0-9-]+$/.test(requestedId)) {
-      return res.status(400).json({ error: 'Neplatné ID: jen písmena, číslice a pomlčky (max 100 znaků)' });
+    if (requestedId.length > 100 || !/^[a-zA-Z0-9._-]+$/.test(requestedId)) {
+      return res.status(400).json({ error: 'Neplatné ID: jen písmena, číslice, tečka, podtržítko a pomlčka (max 100 znaků)' });
     }
     if (db.prepare('SELECT 1 FROM boxes WHERE id = ?').get(requestedId)) {
       return res.status(409).json({ error: 'Krabice s tímto ID už existuje' });

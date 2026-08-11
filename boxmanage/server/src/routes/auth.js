@@ -43,6 +43,22 @@ router.patch('/password', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+router.patch('/username', requireAuth, (req, res) => {
+  const { currentPassword, newUsername } = req.body || {};
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  if (!user || !bcrypt.compareSync(String(currentPassword || ''), user.password_hash)) {
+    return res.status(400).json({ error: 'Současné heslo je špatně' });
+  }
+  const name = String(newUsername || '').toLowerCase().trim();
+  if (!name) return res.status(400).json({ error: 'Uživatelské jméno je povinné' });
+  if (name.length > 50) return res.status(400).json({ error: 'Uživatelské jméno je moc dlouhé (max 50 znaků)' });
+  if (name === user.username) return res.json(publicUser({ id: user.id, username: user.username, role: user.role, created_at: user.created_at }));
+  const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(name);
+  if (existing) return res.status(409).json({ error: 'Toto uživatelské jméno už používá jiný účet' });
+  db.prepare('UPDATE users SET username = ? WHERE id = ?').run(name, req.user.id);
+  res.json(publicUser(db.prepare('SELECT id, username, role, created_at FROM users WHERE id = ?').get(req.user.id)));
+});
+
 router.get('/users', requireAuth, requireAdmin, (req, res) => {
   const rows = db.prepare('SELECT id, username, role, created_at FROM users ORDER BY username').all();
   res.json(rows);
@@ -52,7 +68,13 @@ router.patch('/users/:id', requireAuth, requireAdmin, (req, res) => {
   const id = Number(req.params.id);
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
   if (!user) return res.status(404).json({ error: 'Uživatel nenalezen' });
-  const { role, password } = req.body || {};
+  const { role, password, username } = req.body || {};
+  if (username !== undefined && username !== null && String(username).trim() !== '' && String(username).trim() !== user.username) {
+    const name = String(username).toLowerCase().trim();
+    const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(name);
+    if (existing && existing.id !== id) return res.status(409).json({ error: 'Toto uživatelské jméno už používá jiný účet' });
+    db.prepare('UPDATE users SET username = ? WHERE id = ?').run(name, id);
+  }
   if (role && role !== user.role) {
     if (user.role === 'admin' && role !== 'admin') {
       const admins = db.prepare('SELECT COUNT(*) AS c FROM users WHERE role = ?').get('admin').c;

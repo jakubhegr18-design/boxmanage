@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { api, fmtDate, fmtQty } from '../api';
+import { api, downloadFile, fmtDate, fmtQty } from '../api';
 import QRLabel from '../components/QRLabel';
 import PositionPicker from '../components/PositionPicker';
 import QuantityDialog from '../components/QuantityDialog';
 import Modal from '../components/Modal';
-import { ChevronLeft, Pin, Edit, Printer, Trash } from '../components/Icons';
+import { ChevronLeft, Pin, Edit, Printer, Download, Trash, Bluetooth } from '../components/Icons';
 
 export default function BoxDetail() {
   const { id } = useParams();
@@ -19,7 +19,6 @@ export default function BoxDetail() {
   const [position, setPosition] = useState('');
   const [moveLoc, setMoveLoc] = useState('');
   const [error, setError] = useState('');
-  const [confirmDel, setConfirmDel] = useState(false);
 
   const load = useCallback(() => {
     api(`/api/boxes/${id}`).then((b) => {
@@ -94,9 +93,16 @@ export default function BoxDetail() {
   }
 
   async function deleteBox() {
+    if (!window.confirm(`Smazat krabici "${box.name}" a všechny její položky? Tuto akci nelze vrátit.`)) return;
     try {
       await api(`/api/boxes/${box.id}`, { method: 'DELETE' });
       navigate('/boxes');
+    } catch (err) { setError(err.message); }
+  }
+
+  async function downloadLabel() {
+    try {
+      await downloadFile(`/api/boxes/${box.id}/label.png`, `${box.id}-label.png`);
     } catch (err) { setError(err.message); }
   }
 
@@ -115,7 +121,9 @@ export default function BoxDetail() {
         <div className="detail-actions">
           <Link className="btn" to={`/boxes/${box.id}/edit`}><Edit size={16} /> Upravit</Link>
           <Link className="btn" to={`/print?box=${box.id}`}><Printer size={16} /> Štítek</Link>
-          <button className="btn btn-icon btn-danger" onClick={() => setConfirmDel(true)} aria-label="Smazat"><Trash size={17} /></button>
+          <button className="btn" onClick={downloadLabel}><Download size={16} /> Stáhnout PNG</button>
+          <Link className="btn" to={`/print-ble/${box.id}`}><Bluetooth size={16} /> Vytisknout</Link>
+          <button className="btn btn-icon btn-danger" onClick={deleteBox} aria-label="Smazat"><Trash size={17} /></button>
         </div>
       </div>
 
@@ -208,7 +216,7 @@ export default function BoxDetail() {
         onConfirm={confirmQty}
       />
 
-      <Modal open={!!itemEditor} title="Upravit položku" onClose={() => setItemEditor(null)}>
+      <Modal open={itemEditor !== null} title="Upravit položku" onClose={() => setItemEditor(null)}>
         <form onSubmit={saveItem} className="modal-form">
           <input className="input" placeholder="Název" value={itemEditor?.name || ''} onChange={(e) => setItemEditor({ ...itemEditor, name: e.target.value })} />
           <div className="row">
@@ -220,14 +228,6 @@ export default function BoxDetail() {
             <button type="submit" className="btn btn-primary">Uložit</button>
           </div>
         </form>
-      </Modal>
-
-      <Modal open={confirmDel} title="Smazat krabici?" onClose={() => setConfirmDel(false)}>
-        <p>Krabice <strong>{box.name}</strong> a všechny její položky budou smazány. Tuto akci nelze vrátit.</p>
-        <div className="modal-actions">
-          <button className="btn" onClick={() => setConfirmDel(false)}>Zrušit</button>
-          <button className="btn btn-danger" onClick={deleteBox}>Smazat</button>
-        </div>
       </Modal>
     </div>
   );

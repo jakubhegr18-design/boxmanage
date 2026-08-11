@@ -11,6 +11,7 @@ export default function BoxForm() {
   // ID požadované z naskenovaného QR štítku (Scan.jsx přesměruje na /boxes/new?from=...).
   const fromId = isEdit ? '' : (searchParams.get('from') || '').trim();
   const [form, setForm] = useState({ name: '', description: '', position: '', locationId: '' });
+  const [customId, setCustomId] = useState(fromId);
   const [locations, setLocations] = useState([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -40,8 +41,9 @@ export default function BoxForm() {
         const box = await api(`/api/boxes/${id}`, { method: 'PATCH', body });
         navigate(`/boxes/${box.id}`);
       } else {
-        // Po naskenování neznámého QR pošleme jeho ID, aby nová krabice dostala stejné ID jako na štítku.
-        if (fromId) body.id = fromId;
+        // Po naskenování neznámého QR nebo ručně zadané ID: krabice dostane stejné ID jako na starém štítku.
+        const requestedId = customId.trim();
+        if (requestedId) body.id = requestedId;
         const box = await api('/api/boxes', { method: 'POST', body });
         navigate(`/boxes/${box.id}`);
       }
@@ -65,6 +67,19 @@ export default function BoxForm() {
       <form onSubmit={submit} className="card form">
         <label className="label">Název *</label>
         <input className="input" placeholder="např. Šrouby M6" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus />
+
+        {!isEdit && (
+          <>
+            <label className="label">ID krabice (QR kód) — volitelné</label>
+            <input
+              className="input"
+              placeholder={fromId ? fromId : "např. ZZ-300987716"}
+              value={customId}
+              onChange={(e) => setCustomId(e.target.value)}
+            />
+            <p className="hint">Zadej ID ze starého štítku, aby stávající QR kód fungoval i tady. Povolené jsou písmena, číslice, tečka, podtržítko a pomlčka (max 100 znaků). Prázdné = vygeneruje se nové ID.</p>
+          </>
+        )}
 
         <label className="label">Popis</label>
         <textarea className="input" rows={3} placeholder="Co v krabici je…" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />

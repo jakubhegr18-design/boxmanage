@@ -30,6 +30,7 @@ export default function Users() {
     e.preventDefault();
     const body = {};
     if (editUser.role) body.role = editUser.role;
+    if (editUser.username.trim() && editUser.username.trim() !== editUser.originalUsername) body.username = editUser.username;
     if (editUser.password) body.password = editUser.password;
     try {
       await api(`/api/auth/users/${editUser.id}`, { method: 'PATCH', body });
@@ -61,7 +62,7 @@ export default function Users() {
                 <td>{u.role === 'admin' ? 'Admin' : 'Uživatel'}</td>
                 <td className="muted">{fmtDate(u.created_at)}</td>
                 <td className="row-actions">
-                  <button className="btn btn-sm" onClick={() => setEditUser({ id: u.id, username: u.username, role: u.role, password: '' })} aria-label="Upravit"><Edit size={15} /></button>
+                  <button className="btn btn-sm" onClick={() => setEditUser({ id: u.id, username: u.username, originalUsername: u.username, role: u.role, password: '' })} aria-label="Upravit"><Edit size={15} /></button>
                   <button className="btn btn-sm btn-danger" onClick={() => del(u)} aria-label="Smazat"><Trash size={15} /></button>
                 </td>
               </tr>
@@ -89,6 +90,8 @@ export default function Users() {
       {editUser && (
         <form onSubmit={saveEdit} className="card form">
           <h3>Upravit uživatele: {editUser.username}</h3>
+          <label className="label">Uživatelské jméno</label>
+          <input className="input" value={editUser.username} onChange={(e) => setEditUser({ ...editUser, username: e.target.value })} />
           <label className="label">Role</label>
           <select className="input" value={editUser.role} onChange={(e) => setEditUser({ ...editUser, role: e.target.value })}>
             <option value="user">Uživatel</option>

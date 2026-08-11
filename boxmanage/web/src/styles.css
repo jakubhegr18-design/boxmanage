@@ -252,6 +252,7 @@ select.input { appearance: auto; }
 .alert-error { background: var(--danger-soft); border: 1px solid transparent; color: var(--danger); }
 .alert-warning { background: var(--warn-soft); border: 1px solid transparent; color: var(--warn); }
 .alert-info { background: var(--info-soft); border: 1px solid transparent; color: var(--info); }
+.hint { color: var(--muted); font-size: 0.8rem; margin: 4px 0 0; }
 
 /* ============ Stats ============ */
 .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 18px; }
