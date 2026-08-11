@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.7 (2026-08-11)
+
+### Opravy
+- **Přihlášení ve webovém prohlížeči**: adresa serveru se používá jen v nativní
+  mobilní aplikaci. V prohlížeči (PWA) se vždy volá na stejný origin — dřív
+  uložená HTTP adresa způsobovala z HTTPS stránky blokování „mixed content“
+  a přihlášení končilo „Failed to fetch“.
+- Pole „Adresa serveru“ se zobrazuje pouze v mobilní aplikaci (na přihlašovací
+  stránce i v Nastavení).
+- Selhání zápisu do historie pohybů už neshodí samotnou operaci (500).
+
 ## 1.0.6 (2026-08-11)
 
 ### Opravy

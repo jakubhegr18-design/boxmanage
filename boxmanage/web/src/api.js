@@ -1,4 +1,5 @@
 import { navigate } from './navigate';
+import { isNative } from './ble/backend';
 
 const TOKEN_KEY = 'boxmanage_token';
 const API_BASE_KEY = 'boxmanage_api_url';
@@ -15,15 +16,23 @@ function normalizeApiBase(u) {
 
 export function getApiBase() {
   try {
-    return normalizeApiBase(localStorage.getItem(API_BASE_KEY));
+    const stored = localStorage.getItem(API_BASE_KEY);
+    if (!stored) return '';
+    // V prohlížeči (PWA) se API vždy volá na stejný origin. Uloženou adresu
+    // ignorujeme — jinak by se z HTTPS stránky volalo na HTTP a prohlížeč by
+    // blokoval (mixed content) a přihlášení by spadlo na „Failed to fetch“.
+    return isNative() ? normalizeApiBase(stored) : '';
   } catch {
     return '';
   }
 }
 
 export function setApiBase(url) {
-  if (url && typeof url === 'string') localStorage.setItem(API_BASE_KEY, normalizeApiBase(url));
-  else localStorage.removeItem(API_BASE_KEY);
+  if (url && typeof url === 'string' && isNative()) {
+    localStorage.setItem(API_BASE_KEY, normalizeApiBase(url));
+  } else {
+    localStorage.removeItem(API_BASE_KEY);
+  }
 }
 
 // V nativní mobilní aplikaci se API volá na absolutní adresu BoxManage serveru,

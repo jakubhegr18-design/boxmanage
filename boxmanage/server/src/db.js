@@ -106,8 +106,14 @@ function touchBox(boxId) {
 }
 
 function logMovement(boxId, userId, action, detail) {
-  db.prepare('INSERT INTO movements (box_id, user_id, action, detail) VALUES (?, ?, ?, ?)')
-    .run(boxId, userId, action, detail === undefined || detail === null ? '' : JSON.stringify(detail));
+  // Logování pohybů je best-effort — pokud selže (např. FK konflikt při přechodu dat),
+  // nesmí shodit samotnou operaci uživatele (uprchla by do 500).
+  try {
+    db.prepare('INSERT INTO movements (box_id, user_id, action, detail) VALUES (?, ?, ?, ?)')
+      .run(boxId, userId, action, detail === undefined || detail === null ? '' : JSON.stringify(detail));
+  } catch (err) {
+    console.error('[boxmanage] Nepodařilo se zaznamenat pohyb:', err.message);
+  }
 }
 
 module.exports = { db, getSetting, setSetting, jwtSecret, ensureAdminUser, touchBox, logMovement, dataDir };

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../auth';
 import { getApiBase, setApiBase } from '../api';
+import { isNative } from '../ble/backend';
 import { BrandMark, Users as UserIcon, Lock, Settings as SettingsIcon } from '../components/Icons';
 
 export default function Login() {
@@ -93,26 +94,28 @@ export default function Login() {
           </button>
         </form>
 
-        <div className="login-server">
-          <h2><SettingsIcon size={15} /> Adresa serveru</h2>
-          <p className="muted small">V mobilní aplikaci se BoxManage připojuje na adresu add-onu, např. <code>http://192.168.1.123:8092</code>. Vyplň, ulož a pak se přihlas.</p>
-          <input
-            className="input"
-            placeholder="http://192.168.1.123:8092"
-            value={server}
-            onChange={(e) => setServer(e.target.value)}
-            inputMode="url"
-            autoCapitalize="none"
-          />
-          {serverError && <div className="alert alert-error">{serverError}</div>}
-          {serverMsg && <div className="alert alert-info">{serverMsg}</div>}
-          <div className="row">
-            <button className="btn" type="button" onClick={saveServer}>Uložit adresu</button>
-            <button className="btn" type="button" onClick={testServer} disabled={testing}>
-              {testing ? 'Testuji…' : 'Otestovat'}
-            </button>
+        {isNative() && (
+          <div className="login-server">
+            <h2><SettingsIcon size={15} /> Adresa serveru</h2>
+            <p className="muted small">V mobilní aplikaci se BoxManage připojuje na adresu add-onu, např. <code>http://192.168.1.123:8092</code>. Vyplň, ulož a pak se přihlas.</p>
+            <input
+              className="input"
+              placeholder="http://192.168.1.123:8092"
+              value={server}
+              onChange={(e) => setServer(e.target.value)}
+              inputMode="url"
+              autoCapitalize="none"
+            />
+            {serverError && <div className="alert alert-error">{serverError}</div>}
+            {serverMsg && <div className="alert alert-info">{serverMsg}</div>}
+            <div className="row">
+              <button className="btn" type="button" onClick={saveServer}>Uložit adresu</button>
+              <button className="btn" type="button" onClick={testServer} disabled={testing}>
+                {testing ? 'Testuji…' : 'Otestovat'}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         <p className="login-foot">
           Výchozí účet: <code>admin</code> / <code>admin</code> — změň ho v Nastavení.
