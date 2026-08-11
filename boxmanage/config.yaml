@@ -1,9 +1,11 @@
 name: BoxManage
-version: "1.0.3"
+version: "1.0.4"
 slug: boxmanage
 description: Inventura krabic s QR kódy — tisk štítků, skenování mobilem, pozice A1/B2, historie, export Excel
 url: https://github.com/jakubhegr18-design/boxmanage
 image: ghcr.io/jakubhegr18-design/boxmanage
+documentation: https://github.com/jakubhegr18-design/boxmanage/blob/master/boxmanage/DOCS.md
+changelog: https://github.com/jakubhegr18-design/boxmanage/blob/master/boxmanage/CHANGELOG.md
 arch:
   - aarch64
   - amd64
@@ -12,7 +14,9 @@ boot: auto
 init: true
 ports:
   8090/tcp: 8090
+  8092/tcp: 8092
 ports_description:
   8090/tcp: Webové rozhraní BoxManage (HTTPS, self-signed certifikát)
+  8092/tcp: Webové rozhraní BoxManage (HTTP, pro mobilní aplikaci)
 options: {}
 schema: {}
