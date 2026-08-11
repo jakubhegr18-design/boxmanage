@@ -23,7 +23,8 @@ export default function Boxes() {
 
   useEffect(() => {
     const qs = new URLSearchParams();
-    if (search.trim()) qs.set('q', search.trim());
+    // Do API se posílá parametr "search" — backend ho čte v req.query.search (routes/boxes.js).
+    if (search.trim()) qs.set('search', search.trim());
     if (filterLoc) qs.set('location', filterLoc);
     if (filterPos) qs.set('position', filterPos);
     qs.set('page', page);
@@ -31,6 +32,8 @@ export default function Boxes() {
   }, [search, filterLoc, filterPos, page]);
 
   useEffect(() => {
+    // Adresní řádek používá parametr "q" (záměrně jiný než "search" do API) kvůli
+    // zpětné kompatibilitě s dříve uloženými/sdílenými odkazy (/boxes?q=...).
     const p = new URLSearchParams();
     if (search.trim()) p.set('q', search.trim());
     if (filterLoc) p.set('location', filterLoc);
