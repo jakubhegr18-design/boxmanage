@@ -87,13 +87,17 @@ export default function BoxDetail() {
 
   async function deleteItem(id) {
     if (!window.confirm('Smazat položku?')) return;
-    await api(`/api/items/${id}`, { method: 'DELETE' });
-    load();
+    try {
+      await api(`/api/items/${id}`, { method: 'DELETE' });
+      load();
+    } catch (err) { setError(err.message); }
   }
 
   async function deleteBox() {
-    await api(`/api/boxes/${box.id}`, { method: 'DELETE' });
-    navigate('/boxes');
+    try {
+      await api(`/api/boxes/${box.id}`, { method: 'DELETE' });
+      navigate('/boxes');
+    } catch (err) { setError(err.message); }
   }
 
   return (
