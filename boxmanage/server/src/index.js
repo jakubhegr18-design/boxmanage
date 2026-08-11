@@ -8,6 +8,7 @@ const itemsRoutes = require('./routes/items');
 const locationsRoutes = require('./routes/locations');
 const movementsRoutes = require('./routes/movements');
 const exportRoutes = require('./routes/export');
+const labelsRoutes = require('./routes/labels');
 const statsRoutes = require('./routes/stats');
 
 const app = express();
@@ -24,6 +25,7 @@ app.use('/api', itemsRoutes);
 app.use('/api/locations', locationsRoutes);
 app.use('/api/movements', movementsRoutes);
 app.use('/api/export', exportRoutes);
+app.use('/api', labelsRoutes);
 app.use('/api/stats', statsRoutes);
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));

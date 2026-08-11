@@ -14,6 +14,15 @@ Inventura krabic s QR kódy. Vytiskni QR štítky, nalep na krabice a skenuj je 
 5. **Sken** (mobil) → namiř na QR kód, krabice se otevře. Přidávej/odebírej kusy, přesouvej.
 6. **Export** → stáhni celou inventuru jako CSV/XLSX do Excelu.
 
+## Tisk jedné krabice jako obrázek (termotiskárna Cat Printer)
+
+Na detailu krabice je tlačítko **Stáhnout PNG** — stáhne QR štítek dané krabice jako
+obrázek PNG (384 px, QR + název + pozice). Pro tisk na Bluetooth termotiskárnu:
+
+1. Stáhni PNG tlačítkem na detailu krabice.
+2. Otevři Cat-Printer klienta na Windows: https://github.com/NaitLee/Cat-Printer
+3. V jeho webovém rozhraní nahraj/přetáhni stažený obrázek a vytiskni.
+
 ## HTTPS a kamera
 
 Web běží na HTTPS se **self-signed certifikátem** (generuje Caddy). Při prvním otevření na
