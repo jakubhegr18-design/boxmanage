@@ -1,12 +1,24 @@
 # Changelog
 
+## 1.0.12 (2026-08-11)
+
+### Novinky
+- **Dotaz na adresu serveru při spuštění**: mobilní aplikace se před načtením
+  zeptá na IP adresu a port add-onu (`https://IP:8090`), když ještě není server
+  nastavený. Dialog nejde při prvním spuštění zavřít — aplikace se nepustí dál,
+  dokud adresu nezadáš.
+- Když se nelze připojit (špatná adresa, vypnutý server), aplikace znovu nabídne
+  dialog pro opravu IP adresy a portu.
+- Adresa má oddělená pole pro IP adresu/doménu a port, včetně tlačítka
+  *Otestovat* (stejné jako v Nastavení).
+
 ## 1.0.11 (2026-08-11)
 
 ### Novinky
 - **Jeden port 8090 (HTTPS)**: mobilní aplikace už nepotřebuje samostatný HTTP port
   8092. Android aplikace teď akceptuje self-signed HTTPS certifikát add-onu, takže
   web i mobil běží na jedné adrese `https://IP:8090`.
-- Adresa serveru se zadává jako `https://192.168.1.123:8090`; staré uložené HTTP
+- Adresa serveru se zadává jako `https://192.0.2.10:8090`; staré uložené HTTP
   adresy s portem 8092 se přepíšou automaticky.
 - Po aktualizaci add-onu na 1.0.11 je port 8092 odstraněný — nastav adresu
   `https://IP:8090` (v aplikaci i v dálkovém skeneru).
@@ -58,7 +70,7 @@
 ### Opravy
 - **Přihlášení z mobilní aplikace**: server posílá CORS hlavičky, takže nativní
   aplikace (origin `https://localhost`) se může připojit na HTTP adresu add-onu.
-- Adresa serveru bez protokolu (např. `192.168.1.123:8092`) se automaticky
+- Adresa serveru bez protokolu (např. `192.0.2.10:8092`) se automaticky
   doplní na `http://…`.
 
 ## 1.0.5 (2026-08-11)

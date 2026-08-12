@@ -138,9 +138,9 @@ export default function Settings() {
         <div className="card">
           <h3>Adresa serveru (mobilní aplikace)</h3>
           <p className="muted">
-            Mobilní aplikace se k BoxManage připojuje přes HTTPS (port 8090 add-onu). Zadej adresu ve tvaru https://192.168.1.x:8090.
+            Mobilní aplikace se k BoxManage připojuje přes HTTPS (port 8090 add-onu). Zadej adresu ve tvaru https://192.0.2.10:8090.
           </p>
-          <input className="input" placeholder="https://192.168.1.123:8090" value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} />
+          <input className="input" placeholder="https://192.0.2.10:8090" value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} />
           {apiError && <div className="alert alert-error">{apiError}</div>}
           {apiMsg && <div className="alert alert-info">{apiMsg}</div>}
           <div className="row">

@@ -41,7 +41,7 @@ export default function Login() {
     setServerError(''); setServerMsg('');
     const base = normalizeServerUrl(server);
     if (!base) {
-      setServerError('Zadej adresu serveru, např. https://192.168.1.123:8090');
+      setServerError('Zadej adresu serveru, např. https://192.0.2.10:8090');
       return;
     }
     setTesting(true);
@@ -97,10 +97,10 @@ export default function Login() {
         {isNative() && (
           <div className="login-server">
             <h2><SettingsIcon size={15} /> Adresa serveru</h2>
-            <p className="muted small">V mobilní aplikaci se BoxManage připojuje na adresu add-onu, např. <code>https://192.168.1.123:8090</code>. Vyplň, ulož a pak se přihlas.</p>
+            <p className="muted small">V mobilní aplikaci se BoxManage připojuje na adresu add-onu, např. <code>https://192.0.2.10:8090</code>. Vyplň, ulož a pak se přihlas.</p>
             <input
               className="input"
-              placeholder="https://192.168.1.123:8090"
+              placeholder="https://192.0.2.10:8090"
               value={server}
               onChange={(e) => setServer(e.target.value)}
               inputMode="url"

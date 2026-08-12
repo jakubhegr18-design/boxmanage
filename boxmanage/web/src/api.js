@@ -45,6 +45,37 @@ export function setApiBase(url) {
   }
 }
 
+// Rozdělení uložené adresy na hostitele (IP/doména) a port — pro formulář
+// s odděleným polem IP adresy a portu.
+export function getApiHostPort() {
+  const raw = normalizeApiBase(localStorage.getItem(API_BASE_KEY) || '');
+  if (!raw) return { host: '', port: '8090' };
+  try {
+    const u = new URL(raw);
+    return { host: u.hostname, port: u.port || '8090' };
+  } catch {
+    return { host: '', port: '8090' };
+  }
+}
+
+export function setApiHostPort(host, port) {
+  const h = String(host || '').trim();
+  const p = String(port || '8090').trim() || '8090';
+  if (!h) {
+    setApiBase('');
+    return;
+  }
+  setApiBase(`https://${h}:${p}`);
+}
+
+// Jednoduchý event bus: ostatní části aplikace (App.jsx) na tuto událost
+// reagují zobrazením dialogu pro nastavení adresy serveru — buď při prvním
+// spuštění (žádná adresa uložena), nebo když se nelze připojit.
+export function requestServerSetup(reason, message) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('boxmanage:server-needed', { detail: { reason, message } }));
+}
+
 // V nativní mobilní aplikaci se API volá na absolutní adresu BoxManage serveru,
 // v prohlížeči zůstává relativní (stejné origin).
 export function apiUrl(path) {
@@ -65,7 +96,17 @@ export async function api(path, options = {}) {
     headers['Content-Type'] = 'application/json';
     options.body = JSON.stringify(options.body);
   }
-  const res = await fetch(apiUrl(path), { ...options, headers });
+  let res;
+  try {
+    res = await fetch(apiUrl(path), { ...options, headers });
+  } catch (err) {
+    // Selhání na úrovni sítě (špatná/neplatná adresa serveru, server běží jinde…).
+    // V nativní aplikaci rovnou nabídneme dialog pro změnu IP adresy a portu.
+    if (isNative()) {
+      requestServerSetup('error', 'Nelze se připojit k serveru BoxManage. Zkontroluj adresu a port.');
+    }
+    throw err;
+  }
   if (res.status === 401) {
     setToken(null);
     if (window.location.pathname !== '/login') navigate('/login');

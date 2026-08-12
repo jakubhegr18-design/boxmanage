@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, NavLink, useLocation, useNavigate } from 'reac
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useAuth } from './auth';
 import { setNavigator } from './navigate';
+import ServerDialog from './components/ServerDialog';
 import { BrandMark, Home, Scan, Boxes, Plus, Printer, Pin, Download, Users, Settings as SettingsIcon, LogOut, Sun, Moon, Menu, X, Remote } from './components/Icons';
 
 const Login = lazy(() => import('./pages/Login'));
@@ -202,6 +203,7 @@ function AdminOnly({ children }) {
 export default function App() {
   return (
     <Suspense fallback={<PageLoader />}>
+      <ServerDialog />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<Protected><Layout><Dashboard /></Layout></Protected>} />
