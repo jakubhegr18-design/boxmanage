@@ -4,6 +4,16 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { api, getApiBase, setApiBase, getToken } from '../api';
 import { isNative } from '../ble/backend';
 
+const REMOTE_SESSION_KEY = 'boxmanage_remote_session';
+
+function getRemoteSession() {
+  try { return JSON.parse(localStorage.getItem(REMOTE_SESSION_KEY) || 'null'); } catch { return null; }
+}
+
+function saveRemoteSession(s) {
+  localStorage.setItem(REMOTE_SESSION_KEY, JSON.stringify(s));
+}
+
 export default function Scan() {
   const navigate = useNavigate();
   const scannerRef = useRef(null);
@@ -13,6 +23,10 @@ export default function Scan() {
   const [notFound, setNotFound] = useState(null);
   const [remoteOn, setRemoteOn] = useState(() => localStorage.getItem('boxmanage_remote') === '1');
   const [remoteBase, setRemoteBase] = useState(getApiBase());
+  const [remoteSession, setRemoteSession] = useState(getRemoteSession());
+  const [pairCode, setPairCode] = useState('');
+  const [pairMsg, setPairMsg] = useState('');
+  const [pairError, setPairError] = useState('');
 
   useEffect(() => {
     const el = document.getElementById('qr-reader');
@@ -57,7 +71,9 @@ export default function Scan() {
   }
 
   async function handlePairing(raw) {
-    const url = new URLSearchParams(String(raw.split('?')[1] || '')).get('url');
+    const qs = new URLSearchParams(String(raw.split('?')[1] || ''));
+    const url = qs.get('url');
+    const s = qs.get('s');
     if (!url) { alert('Neplatný párovací QR kód.'); return; }
     await stopScanner();
     if (!isNative()) {
@@ -66,6 +82,10 @@ export default function Scan() {
     }
     setApiBase(url);
     localStorage.setItem('boxmanage_remote', '1');
+    if (s) {
+      saveRemoteSession({ token: s });
+      setRemoteSession({ token: s });
+    }
     setRemoteOn(true);
     setRemoteBase(getApiBase());
     alert(`Server nastaven:\n${getApiBase() || url}\n\nPřihlas se a skenuj krabice.`);
@@ -79,11 +99,36 @@ export default function Scan() {
     else localStorage.removeItem('boxmanage_remote');
   }
 
+  async function joinScanner(e) {
+    e.preventDefault();
+    setPairMsg(''); setPairError('');
+    const code = pairCode.trim();
+    if (!code) return;
+    try {
+      const r = await api('/api/remote/join', { method: 'POST', body: { code } });
+      saveRemoteSession({ token: r.token, code: r.code });
+      setRemoteSession({ token: r.token, code: r.code });
+      localStorage.setItem('boxmanage_remote', '1');
+      setRemoteOn(true);
+      setPairCode('');
+      setPairMsg(`Připojeno ke skeneru (kód ${r.code}). Skenované krabice se na PC objeví živě.`);
+    } catch (err) {
+      setPairError(err.message);
+    }
+  }
+
+  function disconnectScanner() {
+    localStorage.removeItem(REMOTE_SESSION_KEY);
+    setRemoteSession(null);
+    setPairMsg('Odpojeno od dálkového skeneru.');
+  }
+
   async function openBox(id) {
     try {
       await api(`/api/boxes/${id}`);
       if (localStorage.getItem('boxmanage_remote') === '1') {
-        api(`/api/boxes/${id}/scan`, { method: 'POST' }).catch(() => {});
+        const sess = getRemoteSession();
+        api(`/api/boxes/${id}/scan`, { method: 'POST', body: sess ? { session: sess.token } : {} }).catch(() => {});
       }
       navigate(`/boxes/${id}`);
     } catch {
@@ -115,13 +160,37 @@ export default function Scan() {
           <p className="muted">
             Zapni dálkový režim, když skenuješ na dálku — naskenované krabice se
             zobrazí na PC na stránce <strong>Dálkový skener</strong>.
-            Párovací QR kód z PC nastaví adresu serveru automaticky.
           </p>
           <label className="label-inline" style={{ margin: '8px 0' }}>
             <input type="checkbox" checked={remoteOn} onChange={toggleRemote} />
             Dálkový režim
           </label>
+
+          {remoteSession ? (
+            <div className="pair-status">
+              <span className="badge b-warn">připojeno ke skeneru{remoteSession.code ? ` (${remoteSession.code})` : ''}</span>
+              <button className="btn btn-sm" onClick={disconnectScanner}>Odpojit</button>
+            </div>
+          ) : (
+            <form onSubmit={joinScanner} className="row" style={{ marginTop: 8 }}>
+              <input
+                className="input"
+                placeholder="Kód ze skeneru (6 znaků)"
+                value={pairCode}
+                onChange={(e) => setPairCode(e.target.value.toUpperCase())}
+                maxLength={6}
+              />
+              <button className="btn btn-primary" type="submit">Připojit</button>
+            </form>
+          )}
+          {pairMsg && <div className="alert alert-info">{pairMsg}</div>}
+          {pairError && <div className="alert alert-error">{pairError}</div>}
           <p className="muted small">Server: <code>{remoteBase || 'není nastaven'}</code></p>
+          <p className="muted small">
+            QR kód z <strong>Dálkového skeneru</strong> nastaví adresu serveru i připojení
+            ke skeneru automaticky. Kód „připojí" jen k serveru, ke kterému je telefon
+            přihlášený.
+          </p>
         </div>
       )}
 

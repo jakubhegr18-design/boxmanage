@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { Edit, Trash } from '../components/Icons';
+import { Edit, Trash, Bulb } from '../components/Icons';
 
 export default function Locations() {
   const { user } = useAuth();
@@ -11,6 +11,8 @@ export default function Locations() {
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
   const [editing, setEditing] = useState(null);
+  const [findMsg, setFindMsg] = useState('');
+  const [findBusy, setFindBusy] = useState(false);
   const isAdmin = user?.role === 'admin';
 
   function load() {
@@ -32,10 +34,31 @@ export default function Locations() {
   async function update(e) {
     e.preventDefault();
     try {
-      await api(`/api/locations/${editing.id}`, { method: 'PATCH', body: { name: editing.name, description: editing.description } });
+      await api(`/api/locations/${editing.id}`, {
+        method: 'PATCH',
+        body: {
+          name: editing.name,
+          description: editing.description,
+          lightEntity: editing.lightEntity || '',
+          lightOnScan: !!editing.lightOnScan,
+        },
+      });
       setEditing(null);
       load();
     } catch (err) { setError(err.message); }
+  }
+
+  async function testLight(loc) {
+    setFindBusy(true);
+    setFindMsg('');
+    try {
+      const r = await api(`/api/locations/${loc.id}/find`, { method: 'POST' });
+      setFindMsg(`Světlo „${r.entity}“ zablikalo.`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setFindBusy(false);
+    }
   }
 
   async function del(loc) {
@@ -48,6 +71,9 @@ export default function Locations() {
     <div>
       <h2>Lokace</h2>
 
+      {findMsg && <div className="alert alert-info">{findMsg}</div>}
+      {error && <div className="alert alert-error">{error}</div>}
+
       {items.length === 0 && !isAdmin ? (
         <p className="muted">Žádné lokace.</p>
       ) : (
@@ -57,12 +83,18 @@ export default function Locations() {
               <div className="box-main">
                 <div className="box-name">{l.name}</div>
                 {l.description && <div className="muted small">{l.description}</div>}
+                {l.light_entity && (
+                  <div className="muted small loc-light">
+                    <Bulb size={12} /> {l.light_entity}
+                    {Number(l.light_on_scan) === 1 && ' · rozsvítit při skenování'}
+                  </div>
+                )}
               </div>
               <div className="box-side">
                 <Link className="badge" to={`/boxes?location=${l.id}`}>{l.box_count} krabic</Link>
                 {isAdmin && (
                   <span className="row-actions">
-                    <button className="btn btn-sm" onClick={() => setEditing({ id: l.id, name: l.name, description: l.description || '' })} aria-label="Upravit"><Edit size={15} /></button>
+                    <button className="btn btn-sm" onClick={() => setEditing({ id: l.id, name: l.name, description: l.description || '', lightEntity: l.light_entity || '', lightOnScan: Number(l.light_on_scan) === 1 })} aria-label="Upravit"><Edit size={15} /></button>
                     <button className="btn btn-sm btn-danger" onClick={() => del(l)} aria-label="Smazat"><Trash size={15} /></button>
                   </span>
                 )}
@@ -79,7 +111,6 @@ export default function Locations() {
           <input className="input" placeholder="např. Garáž regál B" value={name} onChange={(e) => setName(e.target.value)} />
           <label className="label">Popis</label>
           <input className="input" placeholder="nepovinné" value={desc} onChange={(e) => setDesc(e.target.value)} />
-          {error && <div className="alert alert-error">{error}</div>}
           <button className="btn btn-primary" type="submit">Přidat lokaci</button>
         </form>
       )}
@@ -91,6 +122,26 @@ export default function Locations() {
           <input className="input" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
           <label className="label">Popis</label>
           <input className="input" value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} />
+          <label className="label">Světlo v Home Assistant (entity ID)</label>
+          <input className="input" placeholder="např. light.garaz_regal_b" value={editing.lightEntity || ''} onChange={(e) => setEditing({ ...editing, lightEntity: e.target.value })} />
+          <p className="hint">
+            Když má lokace světlo, tlačítko <strong>Najít</strong> na detailu krabice tímto světlem
+            zabliká (krabice je v sekci, kde světlo svítí). Entity najdeš v Home Assistant
+            v Nastavení → Zařízení (např. light.kuchyn, switch.garaz).
+          </p>
+          <label className="label-inline" style={{ margin: '8px 0' }}>
+            <input
+              type="checkbox"
+              checked={!!editing.lightOnScan}
+              onChange={(e) => setEditing({ ...editing, lightOnScan: e.target.checked })}
+            />
+            Rozsvítit při naskenování krabice z této lokace
+          </label>
+          <div className="row" style={{ marginTop: 8 }}>
+            <button type="button" className="btn" onClick={() => testLight(editing)} disabled={findBusy || !editing.lightEntity}>
+              <Bulb size={15} /> {findBusy ? 'Blikám…' : 'Testovat světlo'}
+            </button>
+          </div>
           <div className="modal-actions">
             <button type="button" className="btn" onClick={() => setEditing(null)}>Zrušit</button>
             <button className="btn btn-primary" type="submit">Uložit</button>

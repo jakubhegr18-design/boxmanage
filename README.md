@@ -16,13 +16,17 @@ vyhledat **BoxManage**, nainstalovat a spustit. Podrobný postup níže.
 
 ## Funkce
 
-- 🏷️ **QR štítky** — tisk na A4 samolepicí papír (2–4 sloupce, libovolný počet kopií)
+- 🏷️ **QR štítky** — tisk na A4 samolepicí papír (2–4 sloupce, libovolný počet kopií), stáhnutí jako PNG
 - 📷 **Skenování mobilem** — kamera v prohlížeči, funguje na HTTPS (self-signed cert zajišťuje Caddy)
+- 📡 **Dálkový skener** — živá fronta skenů z mobilu na PC (SSE), párování QR kódem i ručním kódem, zvuk + systémová notifikace, odškrtávání vyřízených krabic
+- 🖼️ **Fotky** — nahrávej fotky krabic i jednotlivých položek, náhledy v seznamu krabic
 - 📦 **Krabice** — název, popis, obsah s množstvím a jednotkou, vyhledávání
 - 🗺️ **Pozice A1/B2/C3…** — rychlá klávesnice pozic, hledání podle pozice
 - 📍 **Lokace** — garáž, sklad, regál… přesun krabice
 - 📜 **Historie** — kdo a kdy co přidal/vydal/přesunul
 - 👥 **Uživatelé** — admin + běžní uživatelé, přihlašování
+- 💬 **Telegram** — upozornění na nízký stav (limit a zapnutí/vypnutí u každé položky, zpráva s pozicí, lokací a fotkou krabice)
+- 💡 **Home Assistant** — přiřaď lokaci světlo: rozsvítí se při naskenování krabice, tlačítkem *Najít* světlo zabliká
 - 📤 **Export** — CSV i XLSX (Excel)
 - 📱 **PWA** — aplikace se dá nainstalovat na telefon/PC
 
@@ -90,6 +94,12 @@ Výchozí účet: **admin / admin** (změň ho v Nastavení).
 | GET | `/api/movements` | historie |
 | GET | `/api/stats` | statistiky dashboardu |
 | GET | `/api/export/csv` `/xlsx` | export |
+| POST | `/api/remote/sessions` | vytvoření session dálkového skeneru (vrací QR token + párovací kód) |
+| GET | `/api/remote/:token/events` | fronta skenů |
+| GET | `/api/remote/:token/stream` | živý přenos (SSE) |
+| POST | `/api/boxes/:id/scan` | záznam skenu (volitelně `{ session }` → dálkový skener) |
+| POST | `/api/boxes/:id/find` | zablikání světlem lokace (HA) |
+| POST | `/api/boxes/:id/photos` `/items/:id/photos` | upload fotek (multipart) |
 
 ## Technologie
 

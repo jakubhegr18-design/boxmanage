@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.0.13 (2026-08-13)
+
+### Novinky
+- **Dálkový skener (předělán)**: nové párování QR kódem i ručním 6místným kódem,
+  fronta skenů s odškrtáváním (✓), živý přenos přes SSE (Server-Sent Events) —
+  skeny přicházejí okamžitě, bez obnovování. Při novém skenu hraje na PC zvuk
+  (pípnutí) a objeví se systémová notifikace. Kód i QR na PC zůstávají po celou
+  dobu skenování.
+- **Fotky krabic a položek**: do detailu krabice lze nahrát fotky krabice i
+  jednotlivých položek (z mobilu nebo PC). V seznamu krabic se zobrazuje náhled
+  první fotky. Fotky jsou chráněné tokenem, originály i zmenšené náhledy se
+  ukládají do `config/photos`.
+- **Telegram — lepší upozornění na nízký stav**: zpráva obsahuje pozici, lokaci
+  a přikládá fotku krabice; upozornění lze vypnout nebo nastavit limit u každé
+  položky zvlášť (přepínač „Upozorňovat na nízký stav“ v detailu krabice).
+- **Home Assistant — světla**: v *Lokace* lze k lokaci přiřadit světlo/switch
+  (entity) a povolit **rozsvícení při naskenování** krabice. Tlačítko *Najít*
+  v detailu krabice a *Testovat světlo* v lokaci zablikají světlem (3×), aby se
+  krabice dala najít ve tmě. Funguje v HA add-onu (`homeassistant_api: true`);
+  mimo HA server hlásí „Home Assistant není dostupný“.
+
 ## 1.0.12 (2026-08-11)
 
 ### Novinky

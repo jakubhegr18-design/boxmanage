@@ -1,7 +1,7 @@
 name: BoxManage
-version: "1.0.12"
+version: "1.0.13"
 slug: boxmanage
-description: Inventura krabic s QR kódy — tisk štítků, skenování mobilem, pozice A1/B2, historie, export Excel
+description: Inventura krabic s QR kódy — tisk štítků, skenování mobilem, pozice A1/B2, fotky, dálkový skener, Telegram, propojení s Home Assistant
 url: https://github.com/jakubhegr18-design/boxmanage
 image: ghcr.io/jakubhegr18-design/boxmanage
 documentation: https://github.com/jakubhegr18-design/boxmanage/blob/master/boxmanage/DOCS.md
@@ -12,6 +12,7 @@ arch:
 startup: application
 boot: auto
 init: true
+homeassistant_api: true
 ports:
   8090/tcp: 8090
 ports_description:

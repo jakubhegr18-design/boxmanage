@@ -70,6 +70,46 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS box_photos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    box_id TEXT NOT NULL REFERENCES boxes(id) ON DELETE CASCADE,
+    filename TEXT NOT NULL,
+    caption TEXT DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_box_photos_box ON box_photos(box_id);
+
+  CREATE TABLE IF NOT EXISTS item_photos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    filename TEXT NOT NULL,
+    caption TEXT DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_item_photos_item ON item_photos(item_id);
+
+  CREATE TABLE IF NOT EXISTS remote_sessions (
+    token TEXT PRIMARY KEY,
+    code TEXT NOT NULL,
+    created_by INTEGER REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS remote_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_token TEXT NOT NULL REFERENCES remote_sessions(token) ON DELETE CASCADE,
+    box_id TEXT REFERENCES boxes(id) ON DELETE SET NULL,
+    user_id INTEGER REFERENCES users(id),
+    action TEXT NOT NULL DEFAULT 'scanned',
+    detail TEXT DEFAULT '',
+    resolved INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_remote_events_session ON remote_events(session_token, created_at);
 `);
 
 // Migrace pro starší databáze (CREATE TABLE IF NOT EXISTS nepřidá sloupce do existující tabulky).
@@ -82,6 +122,10 @@ function ensureColumn(table, column, definition) {
 
 ensureColumn('items', 'alert_threshold', 'REAL DEFAULT NULL');
 ensureColumn('items', 'last_alert_at', 'TEXT DEFAULT NULL');
+ensureColumn('items', 'alert_enabled', 'INTEGER DEFAULT 1');
+ensureColumn('boxes', 'alert_enabled', 'INTEGER DEFAULT 1');
+ensureColumn('locations', 'light_entity', "TEXT DEFAULT ''");
+ensureColumn('locations', 'light_on_scan', 'INTEGER DEFAULT 0');
 
 function getSetting(key, def) {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);

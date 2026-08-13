@@ -3,6 +3,8 @@ const crypto = require('node:crypto');
 const { db, touchBox, logMovement } = require('../db');
 const { requireAuth } = require('../auth');
 const { actionLabel } = require('../action-labels');
+const { blinkLight, turnOnLight, haAvailable } = require('../ha');
+const { recordRemoteScan } = require('./remote');
 
 const router = express.Router();
 
@@ -35,7 +37,8 @@ router.get('/', requireAuth, (req, res) => {
 
   const items = db.prepare(`
     SELECT b.*, l.name AS location_name,
-      (SELECT COUNT(*) FROM items i WHERE i.box_id = b.id) AS item_count
+      (SELECT COUNT(*) FROM items i WHERE i.box_id = b.id) AS item_count,
+      (SELECT filename FROM box_photos bp WHERE bp.box_id = b.id ORDER BY bp.created_at DESC LIMIT 1) AS photo
     FROM boxes b
     LEFT JOIN locations l ON l.id = b.location_id
     ${whereSql}
@@ -50,6 +53,23 @@ router.get('/:id', requireAuth, (req, res) => {
   const box = getBox(req.params.id);
   if (!box) return res.status(404).json({ error: 'Krabice nenalezena' });
   box.items = db.prepare('SELECT * FROM items WHERE box_id = ? ORDER BY name').all(box.id);
+
+  // Fotky krabice a fotky jednotlivých položek.
+  box.photos = db.prepare('SELECT * FROM box_photos WHERE box_id = ? ORDER BY created_at DESC').all(box.id);
+  const itemPhotos = db.prepare(`
+    SELECT ip.* FROM item_photos ip
+    JOIN items i ON i.id = ip.item_id
+    WHERE i.box_id = ?
+    ORDER BY ip.created_at DESC
+  `).all(box.id);
+  const photosByItem = new Map();
+  for (const p of itemPhotos) {
+    const list = photosByItem.get(p.item_id) || [];
+    list.push(p);
+    photosByItem.set(p.item_id, list);
+  }
+  box.items = box.items.map((it) => ({ ...it, photos: photosByItem.get(it.id) || [] }));
+
   box.movements = db.prepare(`
     SELECT m.*, u.username
     FROM movements m
@@ -160,7 +180,43 @@ router.post('/:id/scan', requireAuth, (req, res) => {
   const box = getBox(req.params.id);
   if (!box) return res.status(404).json({ error: 'Krabice nenalezena' });
   logMovement(box.id, req.user.id, 'scanned', {});
+
+  // Pokud mobil skenuje v dálkovém režimu, zapíše se událost do fronty skeneru
+  // a PC ji obdrží živě přes SSE.
+  const sessionToken = String(req.body?.session || '').trim();
+  if (sessionToken) {
+    recordRemoteScan({ boxId: box.id, userId: req.user.id, sessionToken });
+  }
+
+  // Automatické rozsvícení světla lokace při naskenování (pokud je povolené).
+  if (box.location_id) {
+    const loc = db.prepare('SELECT light_entity, light_on_scan FROM locations WHERE id = ?').get(box.location_id);
+    if (loc?.light_entity && Number(loc.light_on_scan) === 1 && haAvailable()) {
+      turnOnLight(loc.light_entity).catch((err) => console.error('[boxmanage] Rozsvícení světla při skenu selhalo:', err.message));
+    }
+  }
+
   res.json({ ok: true });
+});
+
+// Zabliká světlem lokace krabice, aby se dalo najít, kde krabice je.
+router.post('/:id/find', requireAuth, async (req, res) => {
+  try {
+    const box = getBox(req.params.id);
+    if (!box) return res.status(404).json({ error: 'Krabice nenalezena' });
+    if (!box.location_id) return res.status(400).json({ error: 'Krabice nemá přiřazenou lokaci' });
+    const loc = db.prepare('SELECT * FROM locations WHERE id = ?').get(box.location_id);
+    if (!loc?.light_entity) {
+      return res.status(400).json({ error: `Lokace „${loc?.name || '?'}“ nemá přiřazené světlo (nastav ho v Lokace)` });
+    }
+    if (!haAvailable()) {
+      return res.status(503).json({ error: 'Home Assistant není dostupný (server běží mimo HA add-on).' });
+    }
+    await blinkLight(loc.light_entity);
+    res.json({ ok: true, entity: loc.light_entity, location: loc.name });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message || 'Blikání světla selhalo' });
+  }
 });
 
 function getBox(id) {

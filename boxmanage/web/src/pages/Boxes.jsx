@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { api, fmtDate } from '../api';
+import { api, fmtDate, thumbUrl } from '../api';
 import { Pin, Search } from '../components/Icons';
 
 export default function Boxes() {
@@ -74,6 +74,7 @@ export default function Boxes() {
         <div className="box-list">
           {data.items.map((b) => (
             <Link key={b.id} to={`/boxes/${b.id}`} className="box-card">
+              {b.photo && <img className="box-card-thumb" src={thumbUrl(b.photo)} alt="" loading="lazy" />}
               <div className="box-main">
                 <div className="box-name">{b.name}</div>
                 {b.description && <div className="muted small truncate">{b.description}</div>}

@@ -88,6 +88,18 @@ export function setToken(token) {
   else localStorage.removeItem(TOKEN_KEY);
 }
 
+// URL fotky. Token se předává v query (query: <img> neumí Authorization hlavičku).
+export function photoUrl(filename, { thumb = false } = {}) {
+  if (!filename) return '';
+  const name = thumb ? filename.replace(/\.[^.]+$/, '-thumb.jpg') : filename;
+  const t = encodeURIComponent(getToken() || '');
+  return `${apiUrl('/api/photos/' + encodeURIComponent(name))}?t=${t}`;
+}
+
+export function thumbUrl(filename) {
+  return photoUrl(filename, { thumb: true });
+}
+
 export async function api(path, options = {}) {
   const headers = { ...(options.headers || {}) };
   const token = getToken();

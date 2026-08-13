@@ -11,6 +11,8 @@ const exportRoutes = require('./routes/export');
 const labelsRoutes = require('./routes/labels');
 const statsRoutes = require('./routes/stats');
 const settingsRoutes = require('./routes/settings');
+const uploadsRoutes = require('./routes/uploads');
+const { remoteRouter } = require('./routes/remote');
 const { sweepLowStock } = require('./telegram');
 
 const app = express();
@@ -40,8 +42,23 @@ app.use('/api/export', exportRoutes);
 app.use('/api', labelsRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api', uploadsRoutes);
+app.use('/api/remote', remoteRouter);
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
+
+// Chyby z rout (např. multer: překročený limit, špatný typ souboru) jako JSON.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  if (err) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'Obrázek je příliš velký (max 15 MB)' });
+    }
+    const status = err.status || 500;
+    return res.status(status).json({ error: err.message || 'Neočekávaná chyba' });
+  }
+  next();
+});
 
 const webDir = process.env.WEB_DIR || path.resolve(__dirname, '..', '..', 'web', 'dist');
 if (fs.existsSync(webDir)) {

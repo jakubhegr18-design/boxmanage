@@ -175,8 +175,10 @@ export default function Settings() {
         <div className="card">
           <h3>Telegram — upozornění na nízký stav</h3>
           <p className="muted">
-            Když vybraná položka klesne na nebo pod svůj limit, pošle se zpráva do chatu.
-            Limit se nastavuje u položky v detailu krabice („Upozornit při nízkém stavu“).
+            Když vybraná položka klesne na nebo pod svůj limit, pošle se zpráva do chatu
+            (název krabice, pozice, lokace, položka a zbývající množství; přiloží se fotka krabice).
+            Limit a zapnutí/vypnutí upozornění se nastavují u položky v detailu krabice
+            („Upozorňovat na nízký stav“).
             Token vytvoříš v Telegramu u @BotFather, chat ID je číslo, které ti bot odpoví po startu rozhovoru.
           </p>
           <form onSubmit={saveTelegram}>

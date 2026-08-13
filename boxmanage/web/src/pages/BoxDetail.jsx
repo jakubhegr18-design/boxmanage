@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { api, downloadFile, fmtDate, fmtQty } from '../api';
+import { api, downloadFile, fmtDate, fmtQty, thumbUrl } from '../api';
 import QRLabel from '../components/QRLabel';
 import PositionPicker from '../components/PositionPicker';
 import QuantityDialog from '../components/QuantityDialog';
 import Modal from '../components/Modal';
-import { ChevronLeft, Pin, Edit, Printer, Download, Trash, Bluetooth } from '../components/Icons';
+import PhotoGallery from '../components/PhotoGallery';
+import { ChevronLeft, Pin, Edit, Printer, Download, Trash, Bluetooth, Bulb } from '../components/Icons';
 
 export default function BoxDetail() {
   const { id } = useParams();
@@ -19,6 +20,8 @@ export default function BoxDetail() {
   const [position, setPosition] = useState('');
   const [moveLoc, setMoveLoc] = useState('');
   const [error, setError] = useState('');
+  const [findBusy, setFindBusy] = useState(false);
+  const [findMsg, setFindMsg] = useState('');
 
   const load = useCallback(() => {
     api(`/api/boxes/${id}`).then((b) => {
@@ -82,11 +85,26 @@ export default function BoxDetail() {
           quantity: itemEditor.quantity,
           unit: itemEditor.unit,
           alertThreshold: itemEditor.threshold === '' ? null : Number(itemEditor.threshold),
+          alertEnabled: itemEditor.alertEnabled,
         },
       });
       setItemEditor(null);
       load();
     } catch (err) { setError(err.message); }
+  }
+
+  async function findBox() {
+    setFindBusy(true);
+    setFindMsg('');
+    setError('');
+    try {
+      const r = await api(`/api/boxes/${box.id}/find`, { method: 'POST' });
+      setFindMsg(`Světlo „${r.entity}“ (${r.location}) zablikalo — jdi tam!`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setFindBusy(false);
+    }
   }
 
   async function deleteItem(id) {
@@ -124,6 +142,9 @@ export default function BoxDetail() {
           </div>
         </div>
         <div className="detail-actions">
+          <button className="btn btn-primary" onClick={findBox} disabled={findBusy}>
+            <Bulb size={16} /> {findBusy ? 'Blikám…' : 'Najít'}
+          </button>
           <Link className="btn" to={`/boxes/${box.id}/edit`}><Edit size={16} /> Upravit</Link>
           <Link className="btn" to={`/print?box=${box.id}`}><Printer size={16} /> Štítek</Link>
           <button className="btn" onClick={downloadLabel}><Download size={16} /> Stáhnout PNG</button>
@@ -131,11 +152,17 @@ export default function BoxDetail() {
           <button className="btn btn-icon btn-danger" onClick={deleteBox} aria-label="Smazat"><Trash size={17} /></button>
         </div>
       </div>
+      {findMsg && <div className="alert alert-info">{findMsg}</div>}
 
       <div className="card">
         <h3>QR kód</h3>
         <QRLabel value={box.id} name={box.name} position={box.position} />
         <p className="muted small">ID: <code>{box.id}</code></p>
+      </div>
+
+      <div className="card">
+        <h3>Fotky krabice</h3>
+        <PhotoGallery photos={box.photos} boxId={box.id} onChanged={load} />
       </div>
 
       <div className="card">
@@ -176,12 +203,16 @@ export default function BoxDetail() {
             <tbody>
               {box.items.map((i) => (
                 <tr key={i.id}>
-                  <td className="strong">{i.name} {i.alert_threshold != null && <span className="badge b-warn">≤ {fmtQty(i.alert_threshold)}</span>}</td>
+                  <td>
+                    {i.photos?.[0] && <img className="item-thumb" src={thumbUrl(i.photos[0].filename)} alt="" loading="lazy" />}
+                    <span className="strong">{i.name}</span>
+                    {i.alert_threshold != null && <span className="badge b-warn">≤ {fmtQty(i.alert_threshold)}</span>}
+                  </td>
                   <td>{fmtQty(i.quantity)} {i.unit}</td>
                   <td className="row-actions">
                     <button className="btn btn-sm btn-plus" onClick={() => setQtyDialog({ itemId: i.id, action: 'add', item: i.name })}>+</button>
                     <button className="btn btn-sm btn-minus" onClick={() => setQtyDialog({ itemId: i.id, action: 'remove', item: i.name })}>−</button>
-                    <button className="btn btn-sm" onClick={() => setItemEditor({ id: i.id, name: i.name, quantity: i.quantity, unit: i.unit, threshold: i.alert_threshold ?? '' })} aria-label="Upravit položku"><Edit size={15} /></button>
+                    <button className="btn btn-sm" onClick={() => setItemEditor({ id: i.id, name: i.name, quantity: i.quantity, unit: i.unit, threshold: i.alert_threshold ?? '', alertEnabled: i.alert_enabled !== 0, photos: i.photos || [] })} aria-label="Upravit položku"><Edit size={15} /></button>
                     <button className="btn btn-sm btn-danger" onClick={() => deleteItem(i.id)} aria-label="Smazat položku"><Trash size={15} /></button>
                   </td>
                 </tr>
@@ -228,8 +259,22 @@ export default function BoxDetail() {
             <input className="input" type="number" step="any" min="0" placeholder="Množství" value={itemEditor?.quantity} onChange={(e) => setItemEditor({ ...itemEditor, quantity: e.target.value })} />
             <input className="input" placeholder="Jednotka" value={itemEditor?.unit || ''} onChange={(e) => setItemEditor({ ...itemEditor, unit: e.target.value })} />
           </div>
+          <label className="label-inline" style={{ margin: '10px 0' }}>
+            <input
+              type="checkbox"
+              checked={!!itemEditor?.alertEnabled}
+              onChange={(e) => setItemEditor({ ...itemEditor, alertEnabled: e.target.checked })}
+            />
+            Upozorňovat na nízký stav (Telegram)
+          </label>
           <label className="label">Upozornit při nízkém stavu (nechat prázdné = vypnuto)</label>
           <input className="input" type="number" step="any" min="0" placeholder="Např. 5 — upozorní na Telegram" value={itemEditor?.threshold ?? ''} onChange={(e) => setItemEditor({ ...itemEditor, threshold: e.target.value })} />
+          <label className="label">Fotky položky</label>
+          <PhotoGallery
+            photos={(box.items.find((it) => it.id === itemEditor?.id)?.photos) || []}
+            itemId={itemEditor?.id}
+            onChanged={load}
+          />
           <div className="modal-actions">
             <button type="button" className="btn" onClick={() => setItemEditor(null)}>Zrušit</button>
             <button type="submit" className="btn btn-primary">Uložit</button>

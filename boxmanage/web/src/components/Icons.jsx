@@ -43,6 +43,10 @@ export const Lock = (p) => base(<><rect x="4" y="11" width="16" height="10" rx="
 export const Bluetooth = (p) => base(<path d="m7 7 10 10-5 5V2l5 5L7 17" />, p);
 export const Remote = (p) => base(<><rect x="2" y="4" width="20" height="13" rx="2" /><path d="M8 21h8" /><path d="M12 17v4" /><path d="m7 9 2 2-2 2" /><path d="m17 9-2 2 2 2" /></>, p);
 export const RefreshCw = (p) => base(<><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" /></>, p);
+export const Bulb = (p) => base(<><path d="M9 18h6" /><path d="M10 22h4" /><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5.76.76 1.23 1.52 1.41 2.5" /></>, p);
+export const Camera = (p) => base(<><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></>, p);
+export const Bell = (p) => base(<><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></>, p);
+export const Check = (p) => base(<path d="M20 6 9 17l-5-5" />, p);
 
 export function BrandMark({ size = 34, className = '' }) {
   return (

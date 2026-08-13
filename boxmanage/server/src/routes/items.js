@@ -6,13 +6,13 @@ const { checkItemAlert } = require('../telegram');
 const router = express.Router();
 
 router.post('/boxes/:boxId/items', requireAuth, (req, res) => {
-  const { name, quantity, unit } = req.body || {};
+  const { name, quantity, unit, alertEnabled } = req.body || {};
   if (!name || !String(name).trim()) return res.status(400).json({ error: 'Název položky je povinný' });
   const box = db.prepare('SELECT id, name FROM boxes WHERE id = ?').get(req.params.boxId);
   if (!box) return res.status(404).json({ error: 'Krabice nenalezena' });
   const qty = quantity === undefined || quantity === null ? 0 : Number(quantity);
-  const r = db.prepare('INSERT INTO items (box_id, name, quantity, unit) VALUES (?, ?, ?, ?)')
-    .run(box.id, String(name).trim(), isNaN(qty) ? 0 : qty, String(unit || '').trim());
+  const r = db.prepare('INSERT INTO items (box_id, name, quantity, unit, alert_enabled) VALUES (?, ?, ?, ?, ?)')
+    .run(box.id, String(name).trim(), isNaN(qty) ? 0 : qty, String(unit || '').trim(), alertEnabled === false ? 0 : 1);
   touchBox(box.id);
   logMovement(box.id, req.user.id, 'item_added', {
     item: String(name).trim(), quantity: isNaN(qty) ? 0 : qty, unit: String(unit || '').trim(),
@@ -23,7 +23,7 @@ router.post('/boxes/:boxId/items', requireAuth, (req, res) => {
 router.patch('/items/:id', requireAuth, (req, res) => {
   const item = db.prepare('SELECT * FROM items WHERE id = ?').get(req.params.id);
   if (!item) return res.status(404).json({ error: 'Položka nenalezena' });
-  const { name, quantity, unit, alertThreshold } = req.body || {};
+  const { name, quantity, unit, alertThreshold, alertEnabled } = req.body || {};
   if (name !== undefined && !String(name).trim()) return res.status(400).json({ error: 'Název je povinný' });
   if (name !== undefined) db.prepare('UPDATE items SET name = ? WHERE id = ?').run(String(name).trim(), item.id);
   if (unit !== undefined) db.prepare('UPDATE items SET unit = ? WHERE id = ?').run(String(unit).trim(), item.id);
@@ -34,6 +34,9 @@ router.patch('/items/:id', requireAuth, (req, res) => {
   if (alertThreshold !== undefined) {
     const t = alertThreshold === null || alertThreshold === '' ? null : Number(alertThreshold);
     db.prepare('UPDATE items SET alert_threshold = ? WHERE id = ?').run(t === null || isNaN(t) ? null : t, item.id);
+  }
+  if (alertEnabled !== undefined) {
+    db.prepare('UPDATE items SET alert_enabled = ? WHERE id = ?').run(alertEnabled ? 1 : 0, item.id);
   }
   touchBox(item.box_id);
   logMovement(item.box_id, req.user.id, 'item_updated', { item: item.name });

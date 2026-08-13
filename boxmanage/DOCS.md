@@ -14,6 +14,45 @@ Inventura krabic s QR kódy. Vytiskni QR štítky, nalep na krabice a skenuj je 
 5. **Sken** (mobil) → namiř na QR kód, krabice se otevře. Přidávej/odebírej kusy, přesouvej.
 6. **Export** → stáhni celou inventuru jako CSV/XLSX do Excelu.
 
+## Dálkový skener
+
+Když skenuješ z mobilu a krabice jsou jinde (garáž, sklep), otevři na PC stránku
+**Dálkový skener**:
+
+1. Na PC se zobrazí párovací QR kód a 6místný ruční kód.
+2. V mobilní aplikaci přejdi na **Sken** a buď naskenuj párovací QR, nebo zadej
+   ruční kód do pole *Kód ze skeneru* a stiskni **Připojit** (musíš být přihlášený,
+   telefon a PC ve stejné síti).
+3. Teď skenuj QR kódy na krabicích — každý sken se na PC objeví **okamžitě** (živý
+   přenos SSE) s pípnutím a systémovou notifikací.
+4. Nalezené/vyřízené krabice na PC odškrtni tlačítkem ✓ — přehled, co je hotové,
+   zůstává na obrazovce, dokud relaci nezrušíš tlačítkem *Nový kód*.
+
+## Fotky krabic a položek
+
+V detailu krabice je sekce **Fotky krabice** a u každé položky **Fotky položky**.
+Nahráváš z mobilu nebo PC (náhledy se vytvoří automaticky). První fotka krabice se
+zobrazí jako náhled v seznamu krabic. Fotky jsou uložené v `/data/photos` a servírují
+se jen s platným přihlášením.
+
+## Telegram — upozornění na nízký stav
+
+1. V *Nastavení → Telegram* zadej bot token (od @BotFather) a chat ID, kam mají
+   zprávy chodit, a stiskni **Odeslat testovací zprávu**.
+2. V detailu krabice zapni u položky přepínač **Upozorňovat na nízký stav** a nastav
+   limit. Jakmile množství klesne na nebo pod limit, přijde zpráva s názvem krabice,
+   pozicí, lokací, položkou a zbývajícím množstvím + fotkou krabice.
+3. Opakování je omezené na jedno za 24 h; když stav klesne pod limit, přijde hned.
+
+## Home Assistant — světla
+
+K lokaci lze přiřadit světlo/switch (např. `light.garage`) v *Lokace → upravit*:
+
+- **Rozsvítit při naskenování** — po naskenování krabice mobilem se světlo rozsvítí.
+- **Testovat světlo** — zabliká 3× (600 ms svítí / 500 ms nesvítí) a vrátí předchozí stav.
+- V detailu krabice je tlačítko **Najít** — světlo lokace zabliká, takže krabici najdeš
+  ve tmě (světlo musí být dostupné přes HA Supervisor API, funguje jen v add-onu).
+
 ## Tisk jedné krabice jako obrázek (termotiskárna Cat Printer)
 
 Na detailu krabice je tlačítko **Stáhnout PNG** — stáhne QR štítek dané krabice jako
