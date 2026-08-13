@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.15 (2026-08-13)
+
+### Opravy
+- **Caddy padal ve smyčce restartů („module not registered: http.matchers.not_path“)**:
+  Caddyfile obsahoval neplatný matcher `not_path`, který v Caddy neexistuje (modul
+  `http.matchers.not_path` není registrovaný), takže Caddy při každém startu skončil
+  s chybou a add-on se točil ve smyčce restartů. Oprava: matcher je zapsaný správně
+  jako `not path` (matcher `not` nad matcherem `path`).
+
 ## 1.0.14 (2026-08-13)
 
 ### Opravy

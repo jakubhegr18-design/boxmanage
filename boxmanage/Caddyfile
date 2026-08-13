@@ -12,7 +12,7 @@
 
 	# SSE stream dálkového skeneru nesmí být gzipovaný (komprese by zdržovala
 	# živé události) — vyloučíme ho pojmenovaným matcherem.
-	@notstream not_path /api/remote/*/*
+	@notstream not path /api/remote/*/*
 	encode @notstream gzip
 
 	reverse_proxy 127.0.0.1:8091 {
