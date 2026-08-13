@@ -9,9 +9,12 @@
 
 :8090 {
 	tls {$TLS_CERT} {$TLS_KEY}
-	encode gzip {
-		not_path /api/remote/*/*
-	}
+
+	# SSE stream dálkového skeneru nesmí být gzipovaný (komprese by zdržovala
+	# živé události) — vyloučíme ho pojmenovaným matcherem.
+	@notstream not_path /api/remote/*/*
+	encode @notstream gzip
+
 	reverse_proxy 127.0.0.1:8091 {
 		flush_interval -1
 	}

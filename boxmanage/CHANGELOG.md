@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.14 (2026-08-13)
+
+### Opravy
+- **Web byl po 1.0.13 nedostupný (ERR_CONNECTION_REFUSED)**: Caddyfile obsahoval
+  neplatnou syntaxi `encode gzip { not_path … }` — blok za `encode` přijímá jen
+  encoder moduly, takže Caddy hledal neexistující modul `http.encoders.not_path`
+  a nenastartoval se. Web na portu 8090 proto odmítal připojení jak po aktualizaci,
+  tak u nové instalace (Node běžel, ale Caddy ne). Oprava: vyloučení SSE streamu
+  přes pojmenovaný matcher `@notstream`.
+- **Viditelnější selhání Caddy**: `run.sh` teď po startu Caddy zkontroluje, že
+  proces žije — když Caddy spadne (špatná konfigurace), add-on skončí s chybou
+  a v HA se zobrazí *Neúspěšný* místo *Spuštěno* s mrtvým proxy.
+
 ## 1.0.13 (2026-08-13)
 
 ### Novinky

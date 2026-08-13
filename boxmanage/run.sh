@@ -38,6 +38,15 @@ echo "[boxmanage] Starting Caddy (HTTPS :8090)..."
 caddy run --config /app/Caddyfile &
 CADDY_PID=$!
 
+# Pár sekund na start — pokud Caddy spadl (např. špatná konfigurace), ukončíme
+# add-on s chybou místo běhu s mrtvým proxy (web na :8090 by byl nedostupný
+# a HA by add-on tvářil jako "spuštěný").
+sleep 2
+if ! kill -0 "$CADDY_PID" 2>/dev/null; then
+  echo "[boxmanage] ERROR: Caddy se nenastartoval (viz chyby výše). Končím." >&2
+  exit 1
+fi
+
 trap 'kill $CADDY_PID 2>/dev/null' EXIT INT TERM
 
 echo "[boxmanage] Starting BoxManage server (127.0.0.1:${PORT})..."
