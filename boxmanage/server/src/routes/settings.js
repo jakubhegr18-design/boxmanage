@@ -1,7 +1,7 @@
 const express = require('express');
 const { getSetting, setSetting } = require('../db');
 const { requireAuth, requireAdmin } = require('../auth');
-const { sendTelegram } = require('../telegram');
+const { sendTelegram, normalizeChatId } = require('../telegram');
 
 const router = express.Router();
 
@@ -26,8 +26,12 @@ router.get('/', requireAuth, (req, res) => {
 
 router.put('/telegram', requireAuth, requireAdmin, (req, res) => {
   const { enabled, chatId, token } = req.body || {};
+  const normalized = normalizeChatId(chatId);
+  if (!normalized) {
+    return res.status(400).json({ error: 'Chat ID musí být celé číslo (může být záporné pro skupiny/kanály)' });
+  }
   setSetting('telegram_enabled', enabled ? '1' : '0');
-  setSetting('telegram_chat_id', String(chatId || '').trim());
+  setSetting('telegram_chat_id', normalized);
   if (token && typeof token === 'string' && String(token).trim()) {
     setSetting('telegram_token', String(token).trim());
   }

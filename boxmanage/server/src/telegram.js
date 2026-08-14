@@ -8,6 +8,12 @@ const ENABLED_KEY = 'telegram_enabled';
 const ALERT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const PHOTOS_DIR = path.join(dataDir, 'photos');
 
+function normalizeChatId(raw) {
+  const s = String(raw || '').trim()
+    .replace(/[\u2010\u2011\u2012\u2013\u2014\u2212]/g, '-');
+  return /^-?\d+$/.test(s) ? s : '';
+}
+
 function esc(s) {
   return String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -22,7 +28,7 @@ function telegramConfig() {
   return {
     enabled: getSetting(ENABLED_KEY, '0') === '1',
     token: getSetting(TOKEN_KEY, ''),
-    chatId: getSetting(CHAT_ID_KEY, ''),
+    chatId: normalizeChatId(getSetting(CHAT_ID_KEY, '')),
   };
 }
 
@@ -150,4 +156,4 @@ async function sweepLowStock() {
   }
 }
 
-module.exports = { sendTelegram, checkItemAlert, sweepLowStock };
+module.exports = { sendTelegram, checkItemAlert, sweepLowStock, normalizeChatId };

@@ -196,7 +196,7 @@ export default function Settings() {
               className="input"
               placeholder="123456789"
               value={tg.chatId}
-              onChange={(e) => setTg({ ...tg, chatId: e.target.value })}
+              onChange={(e) => setTg({ ...tg, chatId: e.target.value.replace(/[\u2010\u2011\u2012\u2013\u2014\u2212]/g, '-') })}
             />
             <label className="label-inline" style={{ margin: '12px 0' }}>
               <input
