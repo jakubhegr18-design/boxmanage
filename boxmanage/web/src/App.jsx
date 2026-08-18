@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { useAuth } from './auth';
 import { setNavigator } from './navigate';
 import ServerDialog from './components/ServerDialog';
-import { BrandMark, Home, Scan, Boxes, Plus, Printer, Pin, Download, Users, Settings as SettingsIcon, LogOut, Sun, Moon, Menu, X, Remote } from './components/Icons';
+import { BrandMark, Home, Scan, Boxes, Plus, Printer, Pin, Download, Users, Settings as SettingsIcon, LogOut, Sun, Moon, Menu, X, Remote, Search, Chart } from './components/Icons';
 
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -18,6 +18,8 @@ const Locations = lazy(() => import('./pages/Locations'));
 const UsersPage = lazy(() => import('./pages/Users'));
 const Export = lazy(() => import('./pages/Export'));
 const Settings = lazy(() => import('./pages/Settings'));
+const SearchPage = lazy(() => import('./pages/Search'));
+const StatsPage = lazy(() => import('./pages/Stats'));
 
 function PageLoader() {
   return <div className="center-page">Načítám…</div>;
@@ -29,6 +31,8 @@ const NAV = [
   { to: '/remote', label: 'Dálkový skener', icon: Remote },
   { to: '/boxes', label: 'Krabice', icon: Boxes },
   { to: '/boxes/new', label: 'Nová krabice', icon: Plus },
+  { to: '/search', label: 'Hledání', icon: Search },
+  { to: '/stats', label: 'Statistiky', icon: Chart },
   { to: '/print', label: 'Tisk štítků', icon: Printer },
   { to: '/locations', label: 'Lokace', icon: Pin },
   { to: '/export', label: 'Export', icon: Download },

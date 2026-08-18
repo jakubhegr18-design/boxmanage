@@ -2,6 +2,7 @@ const express = require('express');
 const { getSetting, setSetting } = require('../db');
 const { requireAuth, requireAdmin } = require('../auth');
 const { sendTelegram, normalizeChatId } = require('../telegram');
+const { webhookConfig, saveWebhookConfig } = require('../webhooks');
 
 const router = express.Router();
 
@@ -17,11 +18,17 @@ function labelsPayload() {
   return {
     showName: getSetting('label_show_name', '1') === '1',
     showPosition: getSetting('label_show_position', '1') === '1',
+    showItemQr: getSetting('label_item_qr', '1') === '1',
   };
 }
 
 router.get('/', requireAuth, (req, res) => {
-  res.json({ telegram: telegramPayload(), labels: labelsPayload() });
+  res.json({ telegram: telegramPayload(), labels: labelsPayload(), webhooks: webhookConfig() });
+});
+
+router.put('/webhooks', requireAuth, requireAdmin, (req, res) => {
+  const { enabled, urls } = req.body || {};
+  res.json({ webhooks: saveWebhookConfig({ enabled, urls }) });
 });
 
 router.put('/telegram', requireAuth, requireAdmin, (req, res) => {
@@ -44,9 +51,10 @@ router.post('/telegram/test', requireAuth, requireAdmin, async (req, res) => {
 });
 
 router.put('/labels', requireAuth, (req, res) => {
-  const { showName, showPosition } = req.body || {};
+  const { showName, showPosition, showItemQr } = req.body || {};
   setSetting('label_show_name', showName ? '1' : '0');
   setSetting('label_show_position', showPosition ? '1' : '0');
+  setSetting('label_item_qr', showItemQr ? '1' : '0');
   res.json({ labels: labelsPayload() });
 });
 

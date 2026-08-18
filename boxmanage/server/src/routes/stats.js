@@ -31,7 +31,33 @@ router.get('/', requireAuth, (req, res) => {
     GROUP BY position ORDER BY c DESC, position
   `).all();
 
-  res.json({ boxes, locations, users, items, itemTotal, recent, byPosition });
+  // Pohyby za posledních 12 měsíců (vč. aktuálního) — pro graf na stránce Statistiky.
+  const monthly = db.prepare(`
+    SELECT strftime('%Y-%m', created_at) AS ym, COUNT(*) AS c
+    FROM movements
+    WHERE created_at >= datetime('now', 'start of month', '-11 months')
+    GROUP BY ym ORDER BY ym
+  `).all();
+
+  // Počet krabic podle sekce (šuplík / polička / skříň).
+  const bySection = db.prepare(`
+    SELECT section, COUNT(*) AS c FROM boxes
+    WHERE section != ''
+    GROUP BY section ORDER BY c DESC
+  `).all();
+
+  // Nejvytíženější lokace podle počtu krabic.
+  const topLocations = db.prepare(`
+    SELECT l.id, l.name, COUNT(b.id) AS c
+    FROM locations l
+    LEFT JOIN boxes b ON b.location_id = l.id
+    GROUP BY l.id ORDER BY c DESC, l.name
+    LIMIT 10
+  `).all();
+
+  const movements = db.prepare('SELECT COUNT(*) AS c FROM movements').get().c;
+
+  res.json({ boxes, locations, users, items, itemTotal, movements, recent, byPosition, monthly, topLocations, bySection });
 });
 
 module.exports = router;

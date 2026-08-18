@@ -91,10 +91,11 @@ async function sendTelegramWithPhoto(text, filename) {
 async function checkItemAlert(itemId, previousQty) {
   const item = db.prepare(`
     SELECT i.*, b.name AS box_name, b.position AS box_position,
-      b.alert_enabled AS box_alert_enabled, l.name AS location_name
+      b.alert_enabled AS box_alert_enabled, l.name AS location_name, d.name AS drawer_name
     FROM items i
     JOIN boxes b ON b.id = i.box_id
     LEFT JOIN locations l ON l.id = b.location_id
+    LEFT JOIN drawers d ON d.id = b.drawer_id
     WHERE i.id = ?
   `).get(itemId);
   if (!item) return;

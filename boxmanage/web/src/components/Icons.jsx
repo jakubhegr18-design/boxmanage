@@ -47,6 +47,7 @@ export const Bulb = (p) => base(<><path d="M9 18h6" /><path d="M10 22h4" /><path
 export const Camera = (p) => base(<><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></>, p);
 export const Bell = (p) => base(<><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></>, p);
 export const Check = (p) => base(<path d="M20 6 9 17l-5-5" />, p);
+export const Chart = (p) => base(<><path d="M3 3v18h18" /><path d="M7 15v-4" /><path d="M12 15V8" /><path d="M17 15v-7" /></>, p);
 
 export function BrandMark({ size = 34, className = '' }) {
   return (

@@ -39,6 +39,7 @@ boxmanage/               <- Home Assistant app (add-on)
   Dockerfile             <- sestavení (Node + Caddy self-signed HTTPS)
   server/                <- Node.js + Express API + SQLite (node:sqlite)
   web/                   <- React + Vite + PWA frontend
+  models/                <- 3D modely (OpenSCAD) pro tisk QR držáků
 start.bat                <- lokální spuštění na Windows
 ```
 
@@ -100,6 +101,17 @@ Výchozí účet: **admin / admin** (změň ho v Nastavení).
 | POST | `/api/boxes/:id/scan` | záznam skenu (volitelně `{ session }` → dálkový skener) |
 | POST | `/api/boxes/:id/find` | zablikání světlem lokace (HA) |
 | POST | `/api/boxes/:id/photos` `/items/:id/photos` | upload fotek (multipart) |
+
+## 3D modely (QR držáky)
+
+V složce `boxmanage/models/` najdeš parametrický OpenSCAD soubor pro 3D tisk držáků QR štítků.
+Otevři soubor v [OpenSCAD](https://openscad.org/) a uprav parametry (velikost QR, způsob uchycení…).
+
+**Parametry:**
+- `qr_size` — velikost QR kódu (mm)
+- `mount_type` — `"clip"` (klip na hranu krabice), `"flat"` (plochý pro lepení/šrouby), `"hole"` (se šroubovými otvory)
+- `box_wall_thickness` — tloušťka stěny krabice pro klip
+- `clip_depth` — hloubka klipu
 
 ## Technologie
 

@@ -8,11 +8,11 @@ export default function BoxForm() {
   const isEdit = !!id;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  // ID požadované z naskenovaného QR štítku (Scan.jsx přesměruje na /boxes/new?from=...).
   const fromId = isEdit ? '' : (searchParams.get('from') || '').trim();
-  const [form, setForm] = useState({ name: '', description: '', position: '', locationId: '' });
+  const [form, setForm] = useState({ name: '', description: '', position: '', locationId: '', drawerId: '' });
   const [customId, setCustomId] = useState(fromId);
   const [locations, setLocations] = useState([]);
+  const [drawers, setDrawers] = useState([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -20,10 +20,30 @@ export default function BoxForm() {
     api('/api/locations').then(setLocations).catch(() => {});
     if (isEdit) {
       api(`/api/boxes/${id}`).then((b) => {
-        setForm({ name: b.name, description: b.description || '', position: b.position || '', locationId: b.location_id ? String(b.location_id) : '' });
+        setForm({
+          name: b.name,
+          description: b.description || '',
+          position: b.position || '',
+          locationId: b.location_id ? String(b.location_id) : '',
+          drawerId: b.drawer_id ? String(b.drawer_id) : '',
+        });
       }).catch((e) => setError(e.message));
     }
   }, [id, isEdit]);
+
+  useEffect(() => {
+    if (form.locationId) {
+      api(`/api/boxes/drawers/${form.locationId}`).then((d) => {
+        setDrawers(d);
+        if (form.drawerId && !d.find((x) => String(x.id) === form.drawerId)) {
+          setForm((f) => ({ ...f, drawerId: '' }));
+        }
+      }).catch(() => setDrawers([]));
+    } else {
+      setDrawers([]);
+      if (form.drawerId) setForm((f) => ({ ...f, drawerId: '' }));
+    }
+  }, [form.locationId]);
 
   async function submit(e) {
     e.preventDefault();
@@ -36,12 +56,12 @@ export default function BoxForm() {
         description: form.description,
         position: form.position,
         locationId: form.locationId ? Number(form.locationId) : null,
+        drawerId: form.drawerId ? Number(form.drawerId) : null,
       };
       if (isEdit) {
         const box = await api(`/api/boxes/${id}`, { method: 'PATCH', body });
         navigate(`/boxes/${box.id}`);
       } else {
-        // Po naskenování neznámého QR nebo ručně zadané ID: krabice dostane stejné ID jako na starém štítku.
         const requestedId = customId.trim();
         if (requestedId) body.id = requestedId;
         const box = await api('/api/boxes', { method: 'POST', body });
@@ -90,8 +110,18 @@ export default function BoxForm() {
         <label className="label">Lokace</label>
         <select className="input" value={form.locationId} onChange={(e) => setForm({ ...form, locationId: e.target.value })}>
           <option value="">— bez lokace —</option>
-          {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+          {locations.map((l) => <option key={l.id} value={l.id}>{l.name}{l.type === 'skříň' ? ' (skříň)' : ''}</option>)}
         </select>
+
+        {drawers.length > 0 && (
+          <>
+            <label className="label">Šuplík</label>
+            <select className="input" value={form.drawerId} onChange={(e) => setForm({ ...form, drawerId: e.target.value })}>
+              <option value="">— bez šuplíku —</option>
+              {drawers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+          </>
+        )}
 
         {error && <div className="alert alert-error">{error}</div>}
 

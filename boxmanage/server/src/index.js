@@ -13,6 +13,7 @@ const statsRoutes = require('./routes/stats');
 const settingsRoutes = require('./routes/settings');
 const uploadsRoutes = require('./routes/uploads');
 const { remoteRouter } = require('./routes/remote');
+const { pushRouter } = require('./push');
 const { sweepLowStock } = require('./telegram');
 
 const app = express();
@@ -44,6 +45,7 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api', uploadsRoutes);
 app.use('/api/remote', remoteRouter);
+app.use('/api/push', pushRouter);
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 

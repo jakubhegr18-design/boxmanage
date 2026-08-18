@@ -110,6 +110,25 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_remote_events_session ON remote_events(session_token, created_at);
+
+  CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    endpoint TEXT UNIQUE NOT NULL,
+    auth TEXT NOT NULL,
+    p256dh TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS drawers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    location_id INTEGER NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    position INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_drawers_location ON drawers(location_id);
 `);
 
 // Migrace pro starší databáze (CREATE TABLE IF NOT EXISTS nepřidá sloupce do existující tabulky).
@@ -124,8 +143,14 @@ ensureColumn('items', 'alert_threshold', 'REAL DEFAULT NULL');
 ensureColumn('items', 'last_alert_at', 'TEXT DEFAULT NULL');
 ensureColumn('items', 'alert_enabled', 'INTEGER DEFAULT 1');
 ensureColumn('boxes', 'alert_enabled', 'INTEGER DEFAULT 1');
+ensureColumn('boxes', 'parent_id', "TEXT REFERENCES boxes(id) ON DELETE SET NULL");
+ensureColumn('boxes', 'section', "TEXT DEFAULT ''");
 ensureColumn('locations', 'light_entity', "TEXT DEFAULT ''");
 ensureColumn('locations', 'light_on_scan', 'INTEGER DEFAULT 0');
+ensureColumn('locations', 'type', "TEXT DEFAULT ''");
+ensureColumn('boxes', 'drawer_id', "INTEGER REFERENCES drawers(id) ON DELETE SET NULL");
+db.exec('CREATE INDEX IF NOT EXISTS idx_boxes_parent ON boxes(parent_id)');
+db.exec('CREATE INDEX IF NOT EXISTS idx_boxes_drawer ON boxes(drawer_id)');
 
 function getSetting(key, def) {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);

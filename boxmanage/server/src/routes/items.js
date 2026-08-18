@@ -5,6 +5,41 @@ const { checkItemAlert } = require('../telegram');
 
 const router = express.Router();
 
+// Hledání položek napříč všemi krabicemi (q = část názvu, box = ID krabice).
+// Jména polí odpovídají modelu položky z detailu krabice (name, quantity, unit…),
+// navíc box_id / box_name / box_position / location_name pro zobrazení a navigaci.
+router.get('/items', requireAuth, (req, res) => {
+  const q = String(req.query.q || '').trim().toLowerCase();
+  const box = String(req.query.box || '').trim();
+  const limit = Math.min(200, Math.max(1, Number(req.query.limit) || 50));
+
+  const where = [];
+  const params = [];
+  if (q) {
+    where.push('LOWER(i.name) LIKE ?');
+    params.push(`%${q}%`);
+  }
+  if (box) {
+    where.push('i.box_id = ?');
+    params.push(box);
+  }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+  const rows = db.prepare(`
+    SELECT i.id, i.box_id, b.name AS box_name, b.position AS box_position,
+      COALESCE(l.name, '') AS location_name,
+      i.name, i.quantity, i.unit, i.alert_threshold, i.alert_enabled
+    FROM items i
+    JOIN boxes b ON b.id = i.box_id
+    LEFT JOIN locations l ON l.id = b.location_id
+    ${whereSql}
+    ORDER BY LOWER(i.name), i.id
+    LIMIT ?
+  `).all(...params, limit);
+
+  res.json({ items: rows, total: rows.length });
+});
+
 router.post('/boxes/:boxId/items', requireAuth, (req, res) => {
   const { name, quantity, unit, alertEnabled } = req.body || {};
   if (!name || !String(name).trim()) return res.status(400).json({ error: 'Název položky je povinný' });

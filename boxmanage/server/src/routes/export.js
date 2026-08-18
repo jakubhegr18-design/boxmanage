@@ -8,9 +8,13 @@ const router = express.Router();
 function boxRows() {
   return db.prepare(`
     SELECT b.id, b.name, b.description, b.position,
-           COALESCE(l.name, '') AS location_name, b.created_at, b.updated_at
+           CASE b.section WHEN 'drawer' THEN 'šuplík' WHEN 'shelf' THEN 'polička' WHEN 'cabinet' THEN 'skříň' ELSE '' END AS section,
+           COALESCE(l.name, '') AS location_name,
+           COALESCE(d.name, '') AS drawer_name,
+           b.created_at, b.updated_at
     FROM boxes b
     LEFT JOIN locations l ON l.id = b.location_id
+    LEFT JOIN drawers d ON d.id = b.drawer_id
     ORDER BY b.name
   `).all();
 }
@@ -19,10 +23,12 @@ function itemRows() {
   return db.prepare(`
     SELECT b.id AS box_id, b.name AS box_name, b.position,
            COALESCE(l.name, '') AS location_name,
+           COALESCE(d.name, '') AS drawer_name,
            i.name AS item_name, i.quantity, i.unit
     FROM items i
     JOIN boxes b ON b.id = i.box_id
     LEFT JOIN locations l ON l.id = b.location_id
+    LEFT JOIN drawers d ON d.id = b.drawer_id
     ORDER BY b.name, i.name
   `).all();
 }
@@ -30,8 +36,8 @@ function itemRows() {
 router.get('/csv', requireAuth, (req, res) => {
   const rows = itemRows();
   const lines = [
-    ['krabice_id', 'krabice', 'pozice', 'lokace', 'položka', 'množství', 'jednotka'],
-    ...rows.map((r) => [r.box_id, r.box_name, r.position, r.location_name, r.item_name, r.quantity, r.unit]),
+    ['krabice_id', 'krabice', 'pozice', 'lokace', 'šuplík', 'položka', 'množství', 'jednotka'],
+    ...rows.map((r) => [r.box_id, r.box_name, r.position, r.location_name, r.drawer_name, r.item_name, r.quantity, r.unit]),
   ];
   const csv = '\uFEFF' + lines.map((l) => l.map(esc).join(';')).join('\r\n');
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -49,7 +55,9 @@ router.get('/xlsx', requireAuth, async (req, res) => {
     { header: 'Název', key: 'name', width: 30 },
     { header: 'Popis', key: 'description', width: 40 },
     { header: 'Pozice', key: 'position', width: 10 },
+    { header: 'Sekce', key: 'section', width: 10 },
     { header: 'Lokace', key: 'location_name', width: 20 },
+    { header: 'Šuplík', key: 'drawer_name', width: 15 },
     { header: 'Vytvořeno', key: 'created_at', width: 20 },
     { header: 'Upraveno', key: 'updated_at', width: 20 },
   ];
@@ -61,6 +69,7 @@ router.get('/xlsx', requireAuth, async (req, res) => {
     { header: 'Krabice', key: 'box_name', width: 30 },
     { header: 'Pozice', key: 'position', width: 10 },
     { header: 'Lokace', key: 'location_name', width: 20 },
+    { header: 'Šuplík', key: 'drawer_name', width: 15 },
     { header: 'Položka', key: 'item_name', width: 30 },
     { header: 'Množství', key: 'quantity', width: 12 },
     { header: 'Jednotka', key: 'unit', width: 10 },
@@ -104,6 +113,31 @@ function fmtQty(n) {
   if (!isFinite(num)) return '';
   return Number.isInteger(num) ? String(num) : num.toFixed(2).replace(/\.?0+$/, '');
 }
+
+// Plná záloha celé databáze v JSON (kromě citlivých nastavení) — pro případ obnovy.
+const SENSITIVE_SETTINGS = new Set(['jwt_secret', 'telegram_token', 'vapid_private_key']);
+router.get('/json', requireAuth, (req, res) => {
+  const dump = {
+    exported_at: new Date().toISOString(),
+    app: 'boxmanage',
+    version: 1,
+    users: db.prepare('SELECT id, username, role, created_at FROM users').all(),
+    locations: db.prepare('SELECT * FROM locations').all(),
+    drawers: db.prepare('SELECT * FROM drawers').all(),
+    boxes: db.prepare('SELECT * FROM boxes').all(),
+    items: db.prepare('SELECT * FROM items').all(),
+    movements: db.prepare('SELECT * FROM movements').all(),
+    box_photos: db.prepare('SELECT * FROM box_photos').all(),
+    item_photos: db.prepare('SELECT * FROM item_photos').all(),
+    remote_sessions: db.prepare('SELECT * FROM remote_sessions').all(),
+    remote_events: db.prepare('SELECT * FROM remote_events').all(),
+    settings: db.prepare('SELECT key, value FROM settings').all().filter((s) => !SENSITIVE_SETTINGS.has(s.key)),
+  };
+  const date = new Date().toISOString().slice(0, 10);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="boxmanage-backup-${date}.json"`);
+  res.send(JSON.stringify(dump, null, 2));
+});
 
 // Z objektu detail + action vytvoří čitelný text (obdoba fmtMovement/fmtDetail na frontendu),
 // aby ExcelJS nemusel do buňky ukládat syrový objekt.

@@ -8,6 +8,7 @@ export default function Boxes() {
   const [search, setSearch] = useState(params.get('q') || '');
   const [locations, setLocations] = useState([]);
   const [filterLoc, setFilterLoc] = useState(params.get('location') || '');
+  const [filterDrawer, setFilterDrawer] = useState(params.get('drawer') || '');
   const [filterPos, setFilterPos] = useState(params.get('position') || '');
   const [data, setData] = useState(null);
   const [page, setPage] = useState(1);
@@ -26,6 +27,7 @@ export default function Boxes() {
     // Do API se posílá parametr "search" — backend ho čte v req.query.search (routes/boxes.js).
     if (search.trim()) qs.set('search', search.trim());
     if (filterLoc) qs.set('location', filterLoc);
+    if (filterDrawer) qs.set('drawer', filterDrawer);
     if (filterPos) qs.set('position', filterPos);
     qs.set('page', page);
     api(`/api/boxes?${qs}`).then(setData).catch(() => {});
@@ -37,9 +39,10 @@ export default function Boxes() {
     const p = new URLSearchParams();
     if (search.trim()) p.set('q', search.trim());
     if (filterLoc) p.set('location', filterLoc);
+    if (filterDrawer) p.set('drawer', filterDrawer);
     if (filterPos) p.set('position', filterPos);
     setParams(p, { replace: true });
-  }, [search, filterLoc, filterPos]);
+  }, [search, filterLoc, filterDrawer, filterPos]);
 
   if (!data) return <div className="center-page">Načítám…</div>;
 
@@ -79,8 +82,9 @@ export default function Boxes() {
                 <div className="box-name">{b.name}</div>
                 {b.description && <div className="muted small truncate">{b.description}</div>}
                 <div className="box-meta">
+                  {b.parent_name && <Link to={`/boxes/${b.parent_id}`} className="chip">uvnitř {b.parent_name}</Link>}
                   {b.position && <span className="chip">{b.position}</span>}
-                  {b.location_name && <span className="muted small loc-tag"><Pin size={12} /> {b.location_name}</span>}
+                  {b.location_name && <span className="muted small loc-tag"><Pin size={12} /> {b.location_name}{b.drawer_name ? ` › ${b.drawer_name}` : ''}</span>}
                 </div>
               </div>
               <div className="box-side">

@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Html5Qrcode } from 'html5-qrcode';
 import { api, getApiBase, setApiBase, getToken } from '../api';
-import { isNative } from '../ble/backend';
 
 const REMOTE_SESSION_KEY = 'boxmanage_remote_session';
 
@@ -64,10 +63,33 @@ export default function Scan() {
       handlePairing(raw);
       return;
     }
+    if (raw.startsWith('bm://item')) {
+      handleItem(raw);
+      return;
+    }
     const id = raw.startsWith('bm://') ? raw.slice(5) : raw;
     if (!scannerRef.current?.isScanning) return;
     stopScanner();
     openBox(id);
+  }
+
+  async function handleItem(raw) {
+    const qs = new URLSearchParams(String(raw.split('?')[1] || ''));
+    const b = qs.get('b');
+    const i = qs.get('i');
+    if (!b || !i) { alert('Neplatný QR kód položky.'); return; }
+    if (!scannerRef.current?.isScanning) return;
+    await stopScanner();
+    try {
+      await api(`/api/boxes/${encodeURIComponent(b)}`);
+      if (localStorage.getItem('boxmanage_remote') === '1') {
+        const sess = getRemoteSession();
+        api(`/api/boxes/${encodeURIComponent(b)}/scan`, { method: 'POST', body: sess ? { session: sess.token } : {} }).catch(() => {});
+      }
+      navigate(`/boxes/${encodeURIComponent(b)}?item=${encodeURIComponent(i)}`);
+    } catch {
+      setNotFound(b);
+    }
   }
 
   async function handlePairing(raw) {
@@ -76,10 +98,6 @@ export default function Scan() {
     const s = qs.get('s');
     if (!url) { alert('Neplatný párovací QR kód.'); return; }
     await stopScanner();
-    if (!isNative()) {
-      alert('Tento QR je určený pro mobilní aplikaci BoxManage.');
-      return;
-    }
     setApiBase(url);
     localStorage.setItem('boxmanage_remote', '1');
     if (s) {
@@ -154,13 +172,12 @@ export default function Scan() {
       )}
       {error && <div className="alert alert-error">{error}</div>}
 
-      {isNative() && (
-        <div className="card">
-          <h3>Dálkový režim</h3>
-          <p className="muted">
-            Zapni dálkový režim, když skenuješ na dálku — naskenované krabice se
-            zobrazí na PC na stránce <strong>Dálkový skener</strong>.
-          </p>
+      <div className="card">
+        <h3>Dálkový režim</h3>
+        <p className="muted">
+          Zapni dálkový režim, když skenuješ na dálku — naskenované krabice se
+          zobrazí na PC na stránce <strong>Dálkový skener</strong>.
+        </p>
           <label className="label-inline" style={{ margin: '8px 0' }}>
             <input type="checkbox" checked={remoteOn} onChange={toggleRemote} />
             Dálkový režim
@@ -192,7 +209,6 @@ export default function Scan() {
             přihlášený.
           </p>
         </div>
-      )}
 
       <div className="card">
         <h3>Nebo zadej ID ručně</h3>

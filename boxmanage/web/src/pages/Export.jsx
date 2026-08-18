@@ -16,6 +16,16 @@ export default function Export() {
     }
   }
 
+  async function doBackup() {
+    setMsg('');
+    try {
+      await downloadFile('/api/export/json', 'boxmanage-backup.json');
+      setMsg('Záloha JSON stažena.');
+    } catch (err) {
+      setMsg(`Chyba: ${err.message}`);
+    }
+  }
+
   return (
     <div>
       <h2>Export</h2>
@@ -28,6 +38,14 @@ export default function Export() {
           <button className="btn btn-primary" onClick={() => doExport('xlsx')}><Download size={16} /> Export XLSX</button>
         </div>
         {msg && <div className="alert alert-info">{msg}</div>}
+      </div>
+      <div className="card">
+        <h3>Záloha (JSON)</h3>
+        <p className="muted">
+          Kompletní záloha databáze v JSON (krabice, položky, lokace, historie, nastavení
+          bez hesel a tajných klíčů). Slouží k zálohování, ne k opětovnému importu.
+        </p>
+        <button className="btn btn-primary" onClick={doBackup}><Download size={16} /> Stáhnout zálohu JSON</button>
       </div>
     </div>
   );

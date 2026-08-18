@@ -1,65 +1,167 @@
 const express = require('express');
 const QRCode = require('qrcode');
 const sharp = require('sharp');
-const { db, getSetting } = require('../db');
-const { requireAuth } = require('../auth');
+const jwt = require('jsonwebtoken');
+const { db, jwtSecret, getSetting } = require('../db');
 
 const router = express.Router();
 
-// Generování štítku jedné krabice jako PNG.
-// Zvolená cesta: "qrcode" (PNG buffer) + "sharp" (SVG kompozice s textem -> render do PNG).
-// sharp se instaluje s prebuilt binárkami pro Windows i Docker image (alpine amd64/arm64)
-// a umí rastrovat SVG s <text>, takže fallback (qrcode SVG + @resvg/resvg-js) nebyl potřeba.
-router.get('/boxes/:id/label.png', requireAuth, async (req, res) => {
-  const box = db.prepare('SELECT * FROM boxes WHERE id = ?').get(String(req.params.id));
-  if (!box) return res.status(404).json({ error: 'Krabice nenalezena' });
-
-  const width = Math.max(200, Math.min(800, Number(req.query.width) || 384));
-  const pad = Math.round(width * 0.045);
-  const qrSize = width - pad * 2;
-  const nameFont = Math.round(width * 0.072);
-  const posFont = Math.round(nameFont * 0.66);
-  const nameLineH = Math.round(nameFont * 1.3);
-  const gap = Math.round(nameFont * 0.35);
-
+// Auth z hlavičky (Bearer) nebo z query ?t= (kvůli <img>/Coil v mobilní aplikaci).
+function requireAuthOrQuery(req, res, next) {
+  let token = null;
+  const header = req.headers.authorization || '';
+  if (header.startsWith('Bearer ')) token = header.slice(7);
+  if (!token) token = String(req.query.t || '');
+  if (!token) return res.status(401).json({ error: 'Not authenticated' });
   try {
-    const qrPng = await QRCode.toBuffer(box.id, {
-      type: 'png', width: qrSize, margin: 2, errorCorrectionLevel: 'M',
-    });
+    const payload = jwt.verify(token, jwtSecret);
+    const user = db.prepare('SELECT id, username, role FROM users WHERE id = ?').get(payload.id);
+    if (!user) return res.status(401).json({ error: 'User no longer exists' });
+    req.user = user;
+    next();
+  } catch {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+}
 
-    const nameLines = getSetting('label_show_name', '1') === '1' ? wrap(box.name, qrSize, nameFont, 2) : [];
-    const pos = getSetting('label_show_position', '1') === '1'
-      ? (box.position ? truncate(String(box.position), qrSize, posFont) : '')
-      : '';
-    const textBlock = nameLines.length * nameLineH + (pos ? Math.round(posFont * 1.3) + nameLineH * 0.5 : 0);
-    const height = pad + qrSize + (textBlock ? gap + textBlock : 0) + pad;
+function labelMetrics(width) {
+  const w = Math.max(200, Math.min(800, Number(width) || 384));
+  const pad = Math.round(w * 0.045);
+  return {
+    w,
+    pad,
+    qrSize: w - pad * 2,
+    nameFont: Math.round(w * 0.072),
+    posFont: Math.round(w * 0.072 * 0.66),
+  };
+}
 
-    const parts = [];
-    parts.push(`<rect width="${width}" height="${height}" fill="#ffffff"/>`);
-    parts.push(`<image href="data:image/png;base64,${qrPng.toString('base64')}" x="${pad}" y="${pad}" width="${qrSize}" height="${qrSize}"/>`);
+// Společné vykreslení štítku (QR + řádky textu) do PNG.
+async function renderLabel({ qrData, mainLines, extraLines, width, filename }, res) {
+  const m = labelMetrics(width);
+  const nameLineH = Math.round(m.nameFont * 1.3);
+  const extraLineH = Math.round(m.posFont * 1.4);
+  const gap = Math.round(m.nameFont * 0.35);
 
-    let ty = pad + qrSize + gap;
-    for (const line of nameLines) {
-      parts.push(textEl(line, width, ty, nameFont, true));
-      ty += nameLineH;
+  const qrPng = await QRCode.toBuffer(qrData, {
+    type: 'png', width: m.qrSize, margin: 2, errorCorrectionLevel: 'M',
+  });
+
+  const textBlock = mainLines.length * nameLineH + extraLines.length * extraLineH;
+  const height = m.pad + m.qrSize + (textBlock ? gap + textBlock : 0) + m.pad;
+
+  const parts = [];
+  parts.push(`<rect width="${m.w}" height="${height}" fill="#ffffff"/>`);
+  parts.push(`<image href="data:image/png;base64,${qrPng.toString('base64')}" x="${m.pad}" y="${m.pad}" width="${m.qrSize}" height="${m.qrSize}"/>`);
+
+  let ty = m.pad + m.qrSize + gap;
+  for (const line of mainLines) {
+    parts.push(textEl(line, m.w, ty, m.nameFont, true));
+    ty += nameLineH;
+  }
+  ty += nameLineH * 0.5;
+  for (const line of extraLines) {
+    parts.push(textEl(line, m.w, ty, m.posFont, false));
+    ty += extraLineH;
+  }
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${m.w}" height="${height}" viewBox="0 0 ${m.w} ${height}">${parts.join('')}</svg>`;
+  const png = await sharp(Buffer.from(svg)).png().toBuffer();
+
+  res.setHeader('Content-Type', 'image/png');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Cache-Control', 'no-store');
+  res.send(png);
+}
+
+// Štítek krabice — QR obsahuje raw ID krabice.
+router.get('/boxes/:id/label.png', requireAuthOrQuery, async (req, res) => {
+  try {
+    const box = db.prepare('SELECT * FROM boxes WHERE id = ?').get(String(req.params.id));
+    if (!box) return res.status(404).json({ error: 'Krabice nenalezena' });
+
+    const m = labelMetrics(req.query.width);
+    const mainLines = getSetting('label_show_name', '1') === '1' ? wrap(box.name, m.qrSize, m.nameFont, 2) : [];
+    const extraLines = [];
+    if (getSetting('label_show_position', '1') === '1' && box.position) {
+      extraLines.push(truncate(String(box.position), m.qrSize, m.posFont));
     }
-    if (pos) {
-      ty += nameLineH * 0.5;
-      parts.push(textEl(pos, width, ty, posFont, false));
-    }
 
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${parts.join('')}</svg>`;
-    const png = await sharp(Buffer.from(svg)).png().toBuffer();
-
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Content-Disposition', `attachment; filename="${box.id}-label.png"`);
-    res.setHeader('Cache-Control', 'no-store');
-    res.send(png);
+    await renderLabel({
+      qrData: box.id,
+      mainLines,
+      extraLines,
+      width: req.query.width,
+      filename: `${box.id}-label.png`,
+    }, res);
   } catch (err) {
-    console.error('[labels] Chyba při generování štítku:', err);
+    console.error('[labels] Chyba při generování štítku krabice:', err);
     res.status(500).json({ error: 'Chyba při generování štítku' });
   }
 });
+
+// Štítek položky — QR obsahuje bm://item?b=<box>&i=<item>.
+router.get('/items/:id/label.png', requireAuthOrQuery, async (req, res) => {
+  try {
+    const item = db.prepare(`
+      SELECT i.*, b.name AS box_name, b.position AS box_position
+      FROM items i
+      JOIN boxes b ON b.id = i.box_id
+      WHERE i.id = ?
+    `).get(Number(req.params.id));
+    if (!item) return res.status(404).json({ error: 'Položka nenalezena' });
+
+    const m = labelMetrics(req.query.width);
+    const mainLines = getSetting('label_show_name', '1') === '1' ? wrap(item.name, m.qrSize, m.nameFont, 2) : [];
+    const extraLines = [];
+    if (getSetting('label_show_position', '1') === '1' && item.box_position) {
+      extraLines.push(truncate(String(item.box_position), m.qrSize, m.posFont));
+    }
+    const qty = `${fmtQty(item.quantity)} ${item.unit || ''}`.trim();
+    if (qty) extraLines.push(truncate(qty, m.qrSize, m.posFont));
+
+    await renderLabel({
+      qrData: `bm://item?b=${encodeURIComponent(item.box_id)}&i=${item.id}`,
+      mainLines,
+      extraLines,
+      width: req.query.width,
+      filename: `item-${item.id}-label.png`,
+    }, res);
+  } catch (err) {
+    console.error('[labels] Chyba při generování štítku položky:', err);
+    res.status(500).json({ error: 'Chyba při generování štítku' });
+  }
+});
+
+// Štítek lokace — QR obsahuje bm://location?l=<id> (skener otevře krabice lokace).
+router.get('/locations/:id/label.png', requireAuthOrQuery, async (req, res) => {
+  try {
+    const loc = db.prepare('SELECT * FROM locations WHERE id = ?').get(Number(req.params.id));
+    if (!loc) return res.status(404).json({ error: 'Lokace nenalezena' });
+
+    const m = labelMetrics(req.query.width);
+    const mainLines = getSetting('label_show_name', '1') === '1' ? wrap(loc.name, m.qrSize, m.nameFont, 2) : [];
+    const extraLines = [];
+    if (loc.description) extraLines.push(truncate(String(loc.description), m.qrSize, m.posFont));
+
+    await renderLabel({
+      qrData: `bm://location?l=${loc.id}`,
+      mainLines,
+      extraLines,
+      width: req.query.width,
+      filename: `location-${loc.id}-label.png`,
+    }, res);
+  } catch (err) {
+    console.error('[labels] Chyba při generování štítku lokace:', err);
+    res.status(500).json({ error: 'Chyba při generování štítku' });
+  }
+});
+
+function fmtQty(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '0';
+  return (Math.round(v * 100) / 100).toString();
+}
 
 function textEl(text, width, y, fontSize, bold) {
   return `<text x="${width / 2}" y="${y}" text-anchor="middle" font-family="DejaVu Sans, Arial, sans-serif" font-size="${fontSize}" font-weight="${bold ? 'bold' : 'normal'}" fill="#000000">${escapeXml(text)}</text>`;

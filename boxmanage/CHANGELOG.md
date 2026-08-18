@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.0.16 (2026-08-18)
+
+### Novinky
+- **Typy lokací**: lokace nově mají typ — „Běžná lokace" nebo „Skříň". Typ se zobrazuje
+  jako badge v přehledu lokací a při výběru lokace v krabici.
+- **Šuplíky v lokacích**: k libovolné lokaci lze přidat šuplíky (správa přímo v přehledu
+  lokací rozkliknutím). Krabici lze přiřadit do šuplíku — ve formuláři i detailu krabice
+  se zobrazí výběr šuplíku, pokud má vybraná lokace nějaké.
+- **Přesun krabice do šuplíku**: v detailu krabice lze při přesunu do lokace vybrat i cílový
+  šuplík. Při přesunu se šuplík přenastaví automaticky.
+- **Filtrování krabic podle šuplíku**: v URL lze použít parametr `?drawer=<id>` pro zobrazení
+  krabic z konkrétního šuplíku (odkaz „X krabic" v přehledu šuplíků).
+- **Web Push notifikace (PWA)**: server generuje VAPID klíče a odesílá push notifikace
+  na registrované prohlížeče/telefony (přesun krabice, nová krabice…). Předplatné se
+  registruje v Nastavení.
+- **Webhooky**: v Nastavení lze nastavit URL webhooků, na která se odesílají události
+  (scanned, moved, created, updated, position_changed) jako JSON POST.
+- **Vyhledávání položek**: nová stránka Hledání (`/search`) — fulltextové hledání položek
+  napříč všemi krabicemi s navigací na detail krabice/položky.
+- **Statistiky rozšířeny**: přidán přehled „Sekce" (počty krabic v šuplíku/polici/skříni)
+  a „Top lokace" (nejvytíženější lokace podle počtu krabic).
+- **3D modely (QR držáky)**: v `boxmanage/models/` je parametrický OpenSCAD soubor pro
+  3D tisk držáků QR štítků (klip na hranu krabice, plochý, se šroubovými otvory).
+- **Štítky — auth přes query**: QR štítky v mobilní aplikaci nyní fungují i přes
+  `<img src="...?t=token">` (query parametr místo Authorization hlavičky).
+
+### Změny
+- Export CSV/XLSX nově obsahuje sloupec „Šuplík".
+- Telegram upozornění na nízký stav zobrazuje název šuplíku.
+- Při mazání šuplíku se krabice v něm automaticky odpojí (drawer_id = NULL).
+- Nová komponenta `PositionPicker` s rozšířenými možnostmi výběru pozice.
+
 ## 1.0.15 (2026-08-13)
 
 ### Opravy

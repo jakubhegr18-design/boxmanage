@@ -19,14 +19,14 @@ export default function Settings() {
   const [tgMsg, setTgMsg] = useState('');
   const [tgError, setTgError] = useState('');
   const [tgTesting, setTgTesting] = useState(false);
-  const [lbl, setLbl] = useState({ showName: true, showPosition: true });
+  const [lbl, setLbl] = useState({ showName: true, showPosition: true, showItemQr: true });
   const [lblMsg, setLblMsg] = useState('');
   const [lblError, setLblError] = useState('');
 
   useEffect(() => {
     api('/api/settings').then((s) => {
       setTg({ enabled: s.telegram.enabled, chatId: s.telegram.chatId, token: '', hasToken: s.telegram.hasToken });
-      setLbl({ showName: s.labels.showName, showPosition: s.labels.showPosition });
+      setLbl({ showName: s.labels.showName, showPosition: s.labels.showPosition, showItemQr: s.labels.showItemQr });
     }).catch(() => {});
   }, []);
 
@@ -164,6 +164,10 @@ export default function Settings() {
           <label className="label-inline" style={{ margin: '8px 0' }}>
             <input type="checkbox" checked={lbl.showPosition} onChange={(e) => setLbl({ ...lbl, showPosition: e.target.checked })} />
             Zobrazit pozici (např. A2)
+          </label>
+          <label className="label-inline" style={{ margin: '8px 0' }}>
+            <input type="checkbox" checked={lbl.showItemQr} onChange={(e) => setLbl({ ...lbl, showItemQr: e.target.checked })} />
+            Zobrazit tlačítko QR štítku u položek
           </label>
           {lblError && <div className="alert alert-error">{lblError}</div>}
           {lblMsg && <div className="alert alert-info">{lblMsg}</div>}
